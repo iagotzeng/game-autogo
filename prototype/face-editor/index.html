@@ -1,123 +1,179 @@
 <title>問道棋局捏臉</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
+  /* Single dark theme by choice: the creator is a full-screen game screen, painted explicitly. */
   :root{
-    --ground:#eef1f4; --panel:#ffffff; --panel-2:#e3e9ef; --panel-3:#d5dde6;
-    --ink:#1d2530; --ink-2:#55627a; --line:#c9d2dc;
-    --accent:#5b7fc2; --accent-ink:#ffffff; --ice:#7fd4f5; --gold:#c39a3e;
-    --paper-a:#f7f9fb; --paper-b:#dfe6ee;
-    --shadow:0 10px 30px rgba(29,37,48,.10);
+    color-scheme:dark;
+    --bg:#111418; --bg-2:#181c22; --glass:rgba(20,24,30,.82); --glass-2:rgba(28,33,41,.9);
+    --line:rgba(201,162,74,.28); --line-2:rgba(255,255,255,.08);
+    --ink:#ece6d8; --ink-2:#9aa3ad; --ink-3:#6b737d;
+    --gold:#c9a24a; --gold-2:#e8cd85; --ice:#7fd4f5; --blue:#5b7fc2;
     --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
     --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      color-scheme:dark;
-      --ground:#141920; --panel:#1e2530; --panel-2:#28313d; --panel-3:#333d4b;
-      --ink:#e8edf3; --ink-2:#a3afbf; --line:#3a4554;
-      --accent:#7f9fd8; --accent-ink:#0f141b; --gold:#d9b45a;
-      --paper-a:#2a3340; --paper-b:#1a212b;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-    }
-  }
-  :root[data-theme="dark"]{
-    color-scheme:dark;
-    --ground:#141920; --panel:#1e2530; --panel-2:#28313d; --panel-3:#333d4b;
-    --ink:#e8edf3; --ink-2:#a3afbf; --line:#3a4554;
-    --accent:#7f9fd8; --accent-ink:#0f141b; --gold:#d9b45a;
-    --paper-a:#2a3340; --paper-b:#1a212b;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
-  }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5}
-  .wrap{max-width:1180px;margin:0 auto;padding-inline:16px;padding-block:14px 40px}
-  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px 18px;margin-bottom:12px}
-  h1{font-family:var(--serif);font-weight:700;font-size:22px;margin:0;letter-spacing:.04em}
-  h1 small{font-family:var(--sans);font-weight:400;font-size:12px;color:var(--ink-2);margin-left:8px;letter-spacing:.12em}
-  .presets{display:flex;flex-wrap:wrap;gap:6px}
-  .chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;cursor:pointer}
-  .chip:hover{border-color:var(--accent)}
-  .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-  .chip:focus-visible,.btn:focus-visible,.tab:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
-  .app{display:grid;grid-template-columns:minmax(300px,44%) 1fr;gap:20px;align-items:start}
-  .preview{position:sticky;top:env(safe-area-inset-top,0px);background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);padding:10px}
-  .preview svg{display:block;width:100%;height:auto;max-height:78vh;border-radius:3px}
-  .preview .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--ink-2)}
-  .preview .meta b{font-family:var(--serif);color:var(--ink);font-size:14px}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow);overflow:hidden}
-  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin}
-  .tab{flex:1 0 auto;padding:11px 14px;border:0;background:transparent;color:var(--ink-2);font-family:var(--serif);font-weight:600;font-size:14px;letter-spacing:.08em;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
-  .tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
-  .pane{padding:14px 16px 18px;display:grid;gap:14px}
-  .pane[hidden]{display:none}
-  .ctl{display:grid;gap:6px}
-  .ctl .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:13px}
-  .ctl .lab b{font-weight:500}
-  .ctl .lab .v{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:12px}
-  input[type=range]{width:100%;accent-color:var(--accent);margin:0}
-  .choices{display:flex;flex-wrap:wrap;gap:6px}
-  .choices .chip{padding:4px 10px}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.5;overflow:hidden}
+  .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-inline:16px;padding-block:10px;gap:10px}
+  .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .title{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.08em;white-space:nowrap}
+  .title small{font-family:var(--sans);font-weight:400;font-size:11px;color:var(--ink-3);letter-spacing:.2em;margin-left:8px}
+  .name{font-family:var(--serif);color:var(--gold-2);font-size:14px;letter-spacing:.1em;border-left:1px solid var(--line);padding-left:14px}
+  .spacer{flex:1}
+  .tools{display:flex;gap:6px;flex-wrap:wrap}
+  .tb{border:1px solid var(--line-2);background:var(--glass);color:var(--ink);border-radius:3px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;letter-spacing:.06em;white-space:nowrap}
+  .tb:hover{border-color:var(--gold)}
+  .tb[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-2);background:rgba(201,162,74,.12)}
+  .tb.gold{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+  .tb:disabled{opacity:.4;cursor:default}
+  .tb:focus-visible,.cat:focus-visible,.chip:focus-visible,.sw:focus-visible,input:focus-visible,textarea:focus-visible,.thumb:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+  .main{display:grid;grid-template-columns:76px 1fr minmax(280px,360px);gap:12px;min-height:0}
+  .rail{display:flex;flex-direction:column;gap:4px;overflow-y:auto;scrollbar-width:none;padding-block:2px}
+  .cat{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;background:transparent;color:var(--ink-2);padding:5px 4px;border-radius:4px;cursor:pointer;font:inherit}
+  .cat .g{width:32px;height:32px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--serif);font-size:15px;font-weight:600;color:var(--ink)}
+  .cat .n{font-size:11px;letter-spacing:.1em}
+  .cat:hover .g{border-color:var(--gold)}
+  .cat[aria-selected="true"]{color:var(--gold-2)}
+  .cat[aria-selected="true"] .g{border-color:var(--gold);background:rgba(201,162,74,.14);color:var(--gold-2)}
+  .stage{position:relative;min-height:0;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:4px;background:radial-gradient(ellipse at 50% 40%,#232a33 0%,#151a20 70%);overflow:hidden}
+  .stage svg{display:block;height:100%;width:100%;max-height:100%;touch-action:none}
+  .stage .hint{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--ink-3);letter-spacing:.08em;pointer-events:none}
+  .stage .cam{position:absolute;right:10px;top:10px;display:flex;gap:4px}
+  .stage .cam .tb{padding:4px 9px}
+  .handle{cursor:grab}
+  .handle:active{cursor:grabbing}
+  .panel{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line-2);border-radius:4px;background:var(--glass)}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line-2)}
+  .panel .head h2{margin:0;font-family:var(--serif);font-size:15px;letter-spacing:.14em;color:var(--gold-2);font-weight:600}
+  .sidepick{display:flex;gap:2px}
+  .sidepick[hidden]{display:none}
+  .sidepick .tb{padding:3px 9px;font-size:11px}
+  .body{overflow-y:auto;padding:12px 14px 16px;display:grid;gap:13px;scrollbar-width:thin}
+  .ctl{display:grid;gap:5px}
+  .ctl .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px}
+  .ctl .lab b{font-weight:500;letter-spacing:.04em}
+  .ctl .lab .v{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11px}
+  input[type=range]{width:100%;accent-color:var(--gold);margin:0;height:22px}
+  .choices{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{border:1px solid var(--line-2);background:transparent;color:var(--ink);border-radius:3px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+  .chip:hover{border-color:var(--gold)}
+  .chip[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,74,.16);color:var(--gold-2)}
   .colors{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);cursor:pointer;padding:0;background:none}
-  .sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--accent)}
+  .sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--line-2);cursor:pointer;padding:0;background:none}
+  .sw[aria-pressed="true"]{border-color:var(--gold-2);box-shadow:0 0 0 2px var(--bg-2),0 0 0 3px var(--gold)}
   .sw span{display:block;width:100%;height:100%;border-radius:50%}
-  input[type=color]{width:34px;height:28px;border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:2px;cursor:pointer}
-  .group-title{font-family:var(--serif);font-size:13px;letter-spacing:.14em;color:var(--ink-2);margin:6px 0 -6px;padding-top:8px;border-top:1px dashed var(--line)}
-  .group-title:first-child{border-top:0;padding-top:0;margin-top:0}
-  .actions{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid var(--line);background:var(--panel-2)}
-  .btn{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:4px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer}
-  .btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-  .btn:hover{border-color:var(--accent)}
-  .code{display:grid;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
-  .code label{font-size:12px;color:var(--ink-2)}
-  textarea{width:100%;min-height:54px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);padding:8px}
+  input[type=color]{width:32px;height:26px;border:1px solid var(--line-2);border-radius:3px;background:var(--bg-2);padding:2px;cursor:pointer}
+  .gt{font-family:var(--serif);font-size:12px;letter-spacing:.2em;color:var(--ink-3);padding-top:8px;border-top:1px dashed var(--line-2);margin-bottom:-4px}
+  .gt:first-child{border-top:0;padding-top:0}
+  .bottom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:space-between}
+  .bottom .grp{display:flex;gap:6px;flex-wrap:wrap}
+  .overlay{position:fixed;inset:0;background:rgba(8,10,13,.72);display:grid;place-items:center;padding:16px;z-index:10}
+  .overlay[hidden]{display:none}
+  .sheet{width:min(860px,100%);max-height:90vh;overflow:auto;background:var(--glass-2);border:1px solid var(--line);border-radius:6px;padding:16px 18px 20px;display:grid;gap:14px}
+  .sheet h3{margin:0;font-family:var(--serif);font-size:16px;letter-spacing:.16em;color:var(--gold-2);display:flex;justify-content:space-between;align-items:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .thumb{border:1px solid var(--line-2);background:#0f1216;border-radius:4px;padding:6px;cursor:pointer;display:grid;gap:4px;text-align:center;color:var(--ink);font:inherit}
+  .thumb:hover{border-color:var(--gold)}
+  .thumb svg{width:100%;height:auto;border-radius:3px}
+  .thumb .t{font-family:var(--serif);font-size:12px;letter-spacing:.08em}
+  .thumb .s{font-size:10px;color:var(--ink-3)}
+  .share{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  #qr{width:168px;height:168px;background:#fff;padding:8px;border-radius:4px;color:#1d2530;font-size:11px}
+  #qr img,#qr canvas{display:block;width:152px;height:152px}
+  textarea{width:100%;min-height:64px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;border:1px solid var(--line-2);border-radius:3px;background:#0f1216;color:var(--ink);padding:8px}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .toast{font-size:12px;color:var(--accent);min-height:1.2em}
-  .note{font-size:12px;color:var(--ink-2);margin:10px 0 0}
-  @media (max-width:820px){
-    .app{grid-template-columns:1fr}
-    .preview{position:relative;top:auto}
-    .preview svg{max-height:56vh}
+  .toast{font-size:12px;color:var(--gold-2);min-height:1.2em;letter-spacing:.04em}
+  .muted{font-size:11px;color:var(--ink-3);margin:0}
+  @media (max-width:900px){
+    body{overflow:auto}
+    .app{height:auto}
+    .main{grid-template-columns:1fr;grid-template-rows:auto minmax(52vh,60vh) auto}
+    .rail{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+    .cat{flex:0 0 auto;padding:6px 8px}
+    .panel{max-height:60vh}
+    .share{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:no-preference){
-    .chip,.btn,.tab{transition:background-color .15s,border-color .15s,color .15s}
+    .tb,.chip,.cat .g,.thumb{transition:border-color .15s,background-color .15s,color .15s}
   }
 </style>
 
-<div class="wrap">
-  <header>
-    <h1>問道棋局 · 捏臉<small>原型 v0.1</small></h1>
-    <div class="presets" id="presets" role="group" aria-label="預設臉"></div>
-  </header>
-
-  <div class="app">
-    <section class="preview" aria-label="角色預覽">
-      <svg id="stage" viewBox="0 0 600 760" role="img" aria-label="角色立繪預覽"></svg>
-      <div class="meta"><b id="metaName">青雲劍修</b><span id="metaInfo">青雲宗 · 冰靈根</span></div>
-    </section>
-
-    <section class="panel" aria-label="捏臉控制">
-      <div class="tabs" role="tablist" id="tabs"></div>
-      <div id="panes"></div>
-      <div class="actions">
-        <button class="btn primary" id="btnRandom" type="button">隨機捏臉</button>
-        <button class="btn" id="btnReset" type="button">重置為目前預設</button>
-        <button class="btn" id="btnSave" type="button">存為我的臉</button>
-        <button class="btn" id="btnLoad" type="button">讀取我的臉</button>
-        <span class="toast" id="toast" aria-live="polite"></span>
-      </div>
-      <div class="code">
-        <label for="codeOut">捏臉代碼（分享用）</label>
-        <div class="row"><textarea id="codeOut" readonly></textarea></div>
-        <div class="row"><button class="btn" id="btnCopy" type="button">複製代碼</button></div>
-        <label for="codeIn">貼上代碼載入</label>
-        <div class="row"><textarea id="codeIn" placeholder="WD1.…"></textarea></div>
-        <div class="row"><button class="btn" id="btnImport" type="button">載入代碼</button></div>
-      </div>
-    </section>
+<div class="app">
+  <div class="top">
+    <div class="title">問道棋局 · 捏臉<small>原型 v0.2</small></div>
+    <div class="name" id="metaName">青雲劍修</div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button class="tb" id="btnGallery" type="button">臉譜庫</button>
+      <button class="tb" id="btnSym" type="button" aria-pressed="true">左右對稱</button>
+      <button class="tb" id="btnLight" type="button">光照：正面</button>
+      <button class="tb" id="btnCompare" type="button">按住對比原貌</button>
+    </div>
   </div>
-  <p class="note">滑桿範圍對應企劃案 4.3 的捏臉規格；靈根氣息與宗門道袍為對局顯示用的外觀項目。此為 2D 向量原型，正式版以 3D BlendShape 實作。</p>
+
+  <div class="main">
+    <nav class="rail" id="rail" role="tablist" aria-label="捏臉分區"></nav>
+    <section class="stage" id="stage" aria-label="角色預覽">
+      <svg id="svg" viewBox="0 0 600 760" role="img" aria-label="角色立繪"></svg>
+      <div class="cam">
+        <button class="tb" id="camFull" type="button" aria-pressed="true">半身</button>
+        <button class="tb" id="camFace" type="button" aria-pressed="false">臉部</button>
+      </div>
+      <div class="hint" id="hint">拖曳臉上的金色控制點可直接調整（下巴點：上下拉臉長、左右拉尖方）</div>
+    </section>
+    <aside class="panel" aria-label="細調">
+      <div class="head"><h2 id="panelTitle">骨相</h2><div class="sidepick" id="sidepick" hidden>
+        <button class="tb" id="sideL" type="button" aria-pressed="true">左</button>
+        <button class="tb" id="sideR" type="button" aria-pressed="false">右</button>
+      </div></div>
+      <div class="body" id="panelBody"></div>
+    </aside>
+  </div>
+
+  <div class="bottom">
+    <div class="grp">
+      <button class="tb" id="btnUndo" type="button" disabled>撤銷</button>
+      <button class="tb" id="btnRedo" type="button" disabled>重做</button>
+      <button class="tb" id="btnRandCat" type="button">隨機本區</button>
+      <button class="tb" id="btnRandAll" type="button">隨機全臉</button>
+      <button class="tb" id="btnReset" type="button">重置本區</button>
+    </div>
+    <span class="toast" id="toast" aria-live="polite"></span>
+    <div class="grp">
+      <button class="tb" id="btnSave" type="button">存入臉譜庫</button>
+      <button class="tb gold" id="btnShare" type="button">分享捏臉數據</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovGallery" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="galTitle">
+    <h3 id="galTitle">臉譜庫 <button class="tb" id="galClose" type="button">關閉</button></h3>
+    <div class="gt">宗門預設</div>
+    <div class="grid" id="galPresets"></div>
+    <div class="gt">我的臉譜（存在這個瀏覽器）</div>
+    <div class="grid" id="galSaved"></div>
+    <p class="muted" id="galEmpty">還沒有存過臉譜。捏好後按「存入臉譜庫」。</p>
+  </div>
+</div>
+
+<div class="overlay" id="ovShare" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="shTitle">
+    <h3 id="shTitle">分享捏臉數據 <button class="tb" id="shClose" type="button">關閉</button></h3>
+    <div class="share">
+      <div id="qr" aria-label="捏臉數據二維碼"></div>
+      <div style="display:grid;gap:8px">
+        <label class="muted" for="codeOut">捏臉數據（複製給朋友，或用二維碼）</label>
+        <textarea id="codeOut" readonly></textarea>
+        <div class="row"><button class="tb" id="btnCopy" type="button">複製數據</button><span class="toast" id="toast2" aria-live="polite"></span></div>
+        <label class="muted" for="codeIn">貼上別人的數據載入</label>
+        <textarea id="codeIn" placeholder="WD2.…"></textarea>
+        <div class="row"><button class="tb" id="btnImport" type="button">載入數據</button></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -125,530 +181,609 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const lerp=(a,b,t)=>a+(b-a)*(t/100);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const f=n=>(Math.round(n*10)/10).toString();
 
-/* ---------- colour helpers ---------- */
 function hex2rgb(h){h=h.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');const n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255];}
 function rgb2hex(r,g,b){return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');}
 function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);}
 const shade=(h,t)=>mix(h,'#1d2530',t), tint=(h,t)=>mix(h,'#ffffff',t);
 function luma(h){const [r,g,b]=hex2rgb(h);return (0.299*r+0.587*g+0.114*b)/255;}
 
-/* ---------- parameter spec ---------- */
 const SKINS=['#f4e6dc','#f1d9c6','#e9cdb5','#d9b592','#c2946c','#8f6247'];
 const HAIRS=['#f2f4f7','#c9ced6','#8a8f99','#3b2a22','#1f1b1d','#6b3f2a','#a8743a','#5b7fc2','#8e5aa8'];
 const IRISES=['#6fc3e6','#3d6fb8','#5a8a4a','#4a3c32','#c43a3a','#e0a030','#8e5aa8','#7c8a99'];
+const SHADOWS=[['無',null],['淡紅','#d8707a'],['冰藍','#7fd4f5'],['煙灰','#5a6472'],['赤金','#d9a03a']];
+const LIPS=[['自然',null],['朱紅','#b8302b'],['淡粉','#e8a0a8'],['紫黑','#4a2a3c'],['冰藍','#7fb8d8']];
 const AURAS=[['金','#e8d27a'],['木','#8fd39a'],['水','#7fb8f5'],['火','#f59a7f'],['土','#d4b58a'],['雷','#c9a6ff'],['冰','#7fd4f5'],['風','#b8e8d8']];
-const ROBES=[
-  ['青雲宗','#f7f9fb','#5b7fc2','#c9d6ee'],
-  ['神農谷','#e6efe2','#3f7a4e','#b9d6bf'],
-  ['大雷音寺','#f2d9a6','#b8862b','#e7c26a'],
-  ['血河宗','#2b2530','#a3262b','#5a2f39'],
-  ['萬妖山','#c9a77a','#6b4a2b','#a8743a'],
-  ['逍遙居','#d9dde3','#4a4e8a','#a9adc6']
-];
-const TABS=[
-  {id:'face',name:'臉型',controls:[
+const ROBES=[['青雲宗','#f7f9fb','#5b7fc2','#c9d6ee'],['神農谷','#e6efe2','#3f7a4e','#b9d6bf'],['大雷音寺','#f2d9a6','#b8862b','#e7c26a'],['血河宗','#2b2530','#a3262b','#5a2f39'],['萬妖山','#c9a77a','#6b4a2b','#a8743a'],['逍遙居','#d9dde3','#4a4e8a','#a9adc6']];
+
+const SIDE_KEYS=['eyeDist','eyeH','eyeTilt','eyeSize','browH','browDist','browTilt','browThick','earSize','earAngle'];
+const CATS=[
+  {id:'bone',g:'骨',name:'骨相',controls:[
     {t:'group',n:'輪廓'},
-    {k:'faceLen',t:'slider',n:'臉長'},{k:'faceWid',t:'slider',n:'臉寬'},{k:'jaw',t:'slider',n:'下顎寬'},
-    {k:'cheek',t:'slider',n:'顴骨'},{k:'chin',t:'slider',n:'下巴（尖 → 方）'},
-    {t:'group',n:'膚色'},
-    {k:'skin',t:'color',n:'膚色',sw:SKINS}
+    {k:'faceLen',t:'slider',n:'臉長'},{k:'faceWid',t:'slider',n:'臉寬'},{k:'jaw',t:'slider',n:'下顎寬'},{k:'cheek',t:'slider',n:'顴骨'},{k:'chin',t:'slider',n:'下巴（尖 → 方）'},
+    {t:'group',n:'膚色'},{k:'skin',t:'color',n:'膚色',sw:SKINS}
   ]},
-  {id:'eyes',name:'眉眼',controls:[
-    {t:'group',n:'眉'},
+  {id:'brow',g:'眉',name:'眉',controls:[
     {k:'browType',t:'choice',n:'眉型',o:['劍眉','柳葉眉','平眉','粗眉']},
-    {k:'browH',t:'slider',n:'眉高'},{k:'browDist',t:'slider',n:'眉距'},{k:'browThick',t:'slider',n:'眉濃'},{k:'browTilt',t:'slider',n:'眉勢（垂 → 揚）'},
-    {t:'group',n:'眼'},
+    {k:'browH',t:'slider',n:'眉高',side:1},{k:'browDist',t:'slider',n:'眉距',side:1},{k:'browThick',t:'slider',n:'眉濃',side:1},{k:'browTilt',t:'slider',n:'眉勢（垂 → 揚）',side:1}
+  ]},
+  {id:'eye',g:'眼',name:'眼',controls:[
     {k:'eyeType',t:'choice',n:'眼型',o:['銳利','圓潤','狹長','下垂']},
-    {k:'eyeDist',t:'slider',n:'眼距'},{k:'eyeH',t:'slider',n:'眼高'},{k:'eyeTilt',t:'slider',n:'眼角（垂 → 揚）'},{k:'eyeSize',t:'slider',n:'眼大小'},
-    {k:'iris',t:'color',n:'瞳色',sw:IRISES},
-    {k:'lashes',t:'choice',n:'睫毛',o:['無','有']},
-    {k:'eyeShadow',t:'choice',n:'眼妝',o:['無','淡紅','冰藍']}
+    {k:'eyeDist',t:'slider',n:'眼距',side:1},{k:'eyeH',t:'slider',n:'眼位（高 → 低）',side:1},{k:'eyeTilt',t:'slider',n:'眼角（垂 → 揚）',side:1},{k:'eyeSize',t:'slider',n:'眼大小',side:1},
+    {k:'iris',t:'color',n:'瞳色',sw:IRISES},{k:'lashes',t:'choice',n:'睫毛',o:['無','有']}
   ]},
-  {id:'nose',name:'鼻嘴',controls:[
-    {t:'group',n:'鼻'},
+  {id:'nose',g:'鼻',name:'鼻',controls:[
     {k:'noseType',t:'choice',n:'鼻型',o:['挺直','小巧','鷹鉤']},
-    {k:'noseH',t:'slider',n:'鼻高'},{k:'noseW',t:'slider',n:'鼻寬'},{k:'noseL',t:'slider',n:'鼻長'},
-    {t:'group',n:'嘴'},
-    {k:'mouthType',t:'choice',n:'嘴型',o:['冷峻','微笑','抿唇','厚唇']},
-    {k:'mouthW',t:'slider',n:'嘴寬'},{k:'mouthThick',t:'slider',n:'嘴厚'},{k:'mouthCorner',t:'slider',n:'嘴角（垂 → 揚）'}
+    {k:'noseH',t:'slider',n:'鼻位（高 → 低）'},{k:'noseW',t:'slider',n:'鼻寬'},{k:'noseL',t:'slider',n:'鼻長'}
   ]},
-  {id:'hair',name:'髮型',controls:[
+  {id:'mouth',g:'嘴',name:'嘴',controls:[
+    {k:'mouthType',t:'choice',n:'嘴型',o:['冷峻','微笑','抿唇','厚唇']},
+    {k:'mouthH',t:'slider',n:'嘴位（高 → 低）'},{k:'mouthW',t:'slider',n:'嘴寬'},{k:'mouthThick',t:'slider',n:'嘴厚'},{k:'mouthCorner',t:'slider',n:'嘴角（垂 → 揚）'}
+  ]},
+  {id:'ear',g:'耳',name:'耳',controls:[
+    {k:'earSize',t:'slider',n:'耳大小',side:1},{k:'earAngle',t:'slider',n:'耳外張',side:1}
+  ]},
+  {id:'skin',g:'皮',name:'皮相',controls:[
+    {k:'wocan',t:'choice',n:'臥蠶',o:['無','有']},
+    {k:'faling',t:'slider',n:'法令紋'},{k:'wrinkle',t:'slider',n:'眼尾紋'},
+    {k:'mole',t:'choice',n:'痣',o:['無','眼下','唇邊','眉間']},
+    {k:'freckles',t:'choice',n:'雀斑',o:['無','有']}
+  ]},
+  {id:'hair',g:'髮',name:'髮',controls:[
     {k:'hairStyle',t:'choice',n:'髮型',o:['道髻長髮','高馬尾','披髮','短髮','光頭','半束髮']},
     {k:'bangs',t:'choice',n:'瀏海',o:['中分','斜瀏海','齊瀏海','無瀏海']},
     {k:'hairColor',t:'color',n:'髮色',sw:HAIRS},
     {k:'hairpin',t:'choice',n:'髮簪',o:['無','銀簪','玉簪']},
     {k:'beard',t:'choice',n:'鬍鬚',o:['無','山羊鬍','八字鬍','絡腮鬍']}
   ]},
-  {id:'deco',name:'妝飾',controls:[
+  {id:'makeup',g:'妝',name:'妝容',controls:[
+    {t:'group',n:'眼妝'},
+    {k:'eyeShadow',t:'choice',n:'眼影',o:SHADOWS.map(s=>s[0])},{k:'shadowInt',t:'slider',n:'眼影濃度'},
+    {k:'eyeliner',t:'choice',n:'眼線',o:['無','內眼線','上揚眼線']},
+    {t:'group',n:'頰與唇'},
+    {k:'blush',t:'slider',n:'腮紅'},
+    {k:'lipColor',t:'choice',n:'唇色',o:LIPS.map(l=>l[0])},{k:'lipInt',t:'slider',n:'唇色濃度'},
+    {k:'dimple',t:'choice',n:'面靨',o:['無','有']}
+  ]},
+  {id:'mark',g:'紋',name:'紋飾',controls:[
     {k:'forehead',t:'choice',n:'額飾',o:['無','冰晶花鈿','朱砂','金印']},
     {k:'daoMark',t:'choice',n:'道紋',o:['無','雙頰道紋','眉心道紋']},
     {k:'scar',t:'choice',n:'疤痕',o:['無','左眼疤','右頰疤']}
   ]},
-  {id:'robe',name:'服飾',controls:[
+  {id:'robe',g:'衣',name:'服飾',controls:[
     {k:'robe',t:'choice',n:'宗門道袍',o:ROBES.map(r=>r[0])},
     {k:'aura',t:'choice',n:'靈根氣息',o:AURAS.map(a=>a[0])},
     {k:'halo',t:'choice',n:'境界光效',o:['無','金丹光環']}
   ]}
 ];
-const KEYS=['faceLen','faceWid','jaw','cheek','chin','skin','browType','browH','browDist','browThick','browTilt','eyeType','eyeDist','eyeH','eyeTilt','eyeSize','iris','lashes','eyeShadow','noseType','noseH','noseW','noseL','mouthType','mouthW','mouthThick','mouthCorner','hairStyle','bangs','hairColor','hairpin','beard','forehead','daoMark','scar','robe','aura','halo'];
-const CHOICE_MAX={browType:3,eyeType:3,lashes:1,eyeShadow:2,noseType:2,mouthType:3,hairStyle:5,bangs:3,hairpin:2,beard:3,forehead:3,daoMark:2,scar:2,robe:5,aura:7,halo:1};
+const BASE_KEYS=['faceLen','faceWid','jaw','cheek','chin','skin','browType','browH','browDist','browThick','browTilt','eyeType','eyeDist','eyeH','eyeTilt','eyeSize','iris','lashes','noseType','noseH','noseW','noseL','mouthType','mouthH','mouthW','mouthThick','mouthCorner','earSize','earAngle','wocan','faling','wrinkle','mole','freckles','hairStyle','bangs','hairColor','hairpin','beard','eyeShadow','shadowInt','eyeliner','blush','lipColor','lipInt','dimple','forehead','daoMark','scar','robe','aura','halo','sym','light'];
+const KEYS=BASE_KEYS.concat(SIDE_KEYS.map(k=>k+'_L'),SIDE_KEYS.map(k=>k+'_R'));
+const CHOICE_MAX={browType:3,eyeType:3,lashes:1,noseType:2,mouthType:3,wocan:1,mole:3,freckles:1,hairStyle:5,bangs:3,hairpin:2,beard:3,eyeShadow:4,eyeliner:2,lipColor:4,dimple:1,forehead:3,daoMark:2,scar:2,robe:5,aura:7,halo:1,sym:1,light:2};
 const COLOR_KEYS=['skin','iris','hairColor'];
+const V1_KEYS=['faceLen','faceWid','jaw','cheek','chin','skin','browType','browH','browDist','browThick','browTilt','eyeType','eyeDist','eyeH','eyeTilt','eyeSize','iris','lashes','eyeShadow','noseType','noseH','noseW','noseL','mouthType','mouthW','mouthThick','mouthCorner','hairStyle','bangs','hairColor','hairpin','beard','forehead','daoMark','scar','robe','aura','halo'];
+
+const DEFAULTS={faceLen:50,faceWid:50,jaw:50,cheek:50,chin:50,skin:'#f1d9c6',browType:2,browH:50,browDist:50,browThick:50,browTilt:50,eyeType:1,eyeDist:50,eyeH:50,eyeTilt:50,eyeSize:50,iris:'#4a3c32',lashes:0,noseType:0,noseH:50,noseW:50,noseL:50,mouthType:0,mouthH:50,mouthW:50,mouthThick:50,mouthCorner:50,earSize:50,earAngle:40,wocan:0,faling:0,wrinkle:0,mole:0,freckles:0,hairStyle:2,bangs:3,hairColor:'#1f1b1d',hairpin:0,beard:0,eyeShadow:0,shadowInt:50,eyeliner:0,blush:0,lipColor:0,lipInt:50,dimple:0,forehead:0,daoMark:0,scar:0,robe:0,aura:4,halo:0,sym:1,light:1};
 
 const PRESETS=[
-  {name:'青雲劍修',info:'青雲宗 · 冰靈根',p:{faceLen:62,faceWid:42,jaw:42,cheek:55,chin:22,skin:'#f4e6dc',browType:0,browH:55,browDist:50,browThick:45,browTilt:68,eyeType:0,eyeDist:52,eyeH:50,eyeTilt:70,eyeSize:46,iris:'#6fc3e6',lashes:0,eyeShadow:0,noseType:0,noseH:50,noseW:38,noseL:52,mouthType:0,mouthW:44,mouthThick:28,mouthCorner:35,hairStyle:0,bangs:0,hairColor:'#f2f4f7',hairpin:1,beard:0,forehead:0,daoMark:0,scar:0,robe:0,aura:6,halo:1}},
-  {name:'神農谷丹修',info:'神農谷 · 木靈根',p:{faceLen:44,faceWid:56,jaw:62,cheek:45,chin:62,skin:'#f1d9c6',browType:1,browH:60,browDist:55,browThick:35,browTilt:40,eyeType:1,eyeDist:55,eyeH:48,eyeTilt:45,eyeSize:60,iris:'#5a8a4a',lashes:1,eyeShadow:0,noseType:1,noseH:50,noseW:35,noseL:40,mouthType:1,mouthW:48,mouthThick:45,mouthCorner:75,hairStyle:5,bangs:1,hairColor:'#3b2a22',hairpin:2,beard:0,forehead:0,daoMark:0,scar:0,robe:1,aura:1,halo:0}},
-  {name:'大雷音寺僧',info:'大雷音寺 · 土靈根',p:{faceLen:55,faceWid:60,jaw:75,cheek:50,chin:70,skin:'#e9cdb5',browType:2,browH:50,browDist:50,browThick:55,browTilt:45,eyeType:3,eyeDist:50,eyeH:52,eyeTilt:35,eyeSize:45,iris:'#4a3c32',lashes:0,eyeShadow:0,noseType:0,noseH:50,noseW:55,noseL:55,mouthType:2,mouthW:50,mouthThick:40,mouthCorner:50,hairStyle:4,bangs:3,hairColor:'#1f1b1d',hairpin:0,beard:0,forehead:2,daoMark:0,scar:0,robe:2,aura:4,halo:1}},
-  {name:'血河宗魔修',info:'血河宗 · 火靈根',p:{faceLen:66,faceWid:40,jaw:38,cheek:65,chin:20,skin:'#f1d9c6',browType:0,browH:45,browDist:40,browThick:55,browTilt:85,eyeType:2,eyeDist:48,eyeH:50,eyeTilt:80,eyeSize:42,iris:'#c43a3a',lashes:0,eyeShadow:1,noseType:2,noseH:50,noseW:40,noseL:58,mouthType:2,mouthW:42,mouthThick:25,mouthCorner:20,hairStyle:2,bangs:1,hairColor:'#1f1b1d',hairpin:0,beard:0,forehead:0,daoMark:2,scar:1,robe:3,aura:3,halo:0}},
-  {name:'萬妖山妖修',info:'萬妖山 · 雷靈根',p:{faceLen:55,faceWid:50,jaw:55,cheek:60,chin:35,skin:'#d9b592',browType:3,browH:50,browDist:45,browThick:70,browTilt:70,eyeType:0,eyeDist:55,eyeH:50,eyeTilt:75,eyeSize:55,iris:'#e0a030',lashes:0,eyeShadow:0,noseType:0,noseH:50,noseW:50,noseL:50,mouthType:1,mouthW:55,mouthThick:35,mouthCorner:70,hairStyle:1,bangs:1,hairColor:'#6b3f2a',hairpin:0,beard:0,forehead:0,daoMark:1,scar:0,robe:4,aura:5,halo:0}},
-  {name:'逍遙居散修',info:'逍遙居 · 水靈根',p:{faceLen:52,faceWid:52,jaw:65,cheek:50,chin:55,skin:'#e9cdb5',browType:3,browH:55,browDist:50,browThick:75,browTilt:30,eyeType:3,eyeDist:50,eyeH:50,eyeTilt:30,eyeSize:50,iris:'#3d6fb8',lashes:0,eyeShadow:0,noseType:2,noseH:50,noseW:55,noseL:55,mouthType:1,mouthW:55,mouthThick:40,mouthCorner:85,hairStyle:3,bangs:1,hairColor:'#8a8f99',hairpin:0,beard:3,forehead:0,daoMark:0,scar:2,robe:5,aura:2,halo:0}}
+  {name:'青雲劍修',info:'青雲宗 · 冰靈根',p:{faceLen:62,faceWid:42,jaw:42,cheek:55,chin:22,skin:'#f4e6dc',browType:0,browH:55,browDist:50,browThick:45,browTilt:68,eyeType:0,eyeDist:52,eyeH:50,eyeTilt:70,eyeSize:46,iris:'#6fc3e6',lashes:0,noseType:0,noseH:50,noseW:38,noseL:52,mouthType:0,mouthH:50,mouthW:44,mouthThick:28,mouthCorner:35,earSize:50,earAngle:35,hairStyle:0,bangs:0,hairColor:'#f2f4f7',hairpin:1,beard:0,eyeShadow:0,shadowInt:50,eyeliner:0,blush:8,lipColor:0,lipInt:50,dimple:0,forehead:0,daoMark:0,scar:0,robe:0,aura:6,halo:1}},
+  {name:'神農谷丹修',info:'神農谷 · 木靈根',p:{faceLen:44,faceWid:56,jaw:62,cheek:45,chin:62,skin:'#f1d9c6',browType:1,browH:60,browDist:55,browThick:35,browTilt:40,eyeType:1,eyeDist:55,eyeH:48,eyeTilt:45,eyeSize:60,iris:'#5a8a4a',lashes:1,noseType:1,noseH:50,noseW:35,noseL:40,mouthType:1,mouthH:50,mouthW:48,mouthThick:45,mouthCorner:75,earSize:45,earAngle:40,wocan:1,hairStyle:5,bangs:1,hairColor:'#3b2a22',hairpin:2,beard:0,eyeShadow:1,shadowInt:40,eyeliner:1,blush:45,lipColor:2,lipInt:60,dimple:1,forehead:0,daoMark:0,scar:0,robe:1,aura:1,halo:0}},
+  {name:'大雷音寺僧',info:'大雷音寺 · 土靈根',p:{faceLen:55,faceWid:60,jaw:75,cheek:50,chin:70,skin:'#e9cdb5',browType:2,browH:50,browDist:50,browThick:55,browTilt:45,eyeType:3,eyeDist:50,eyeH:52,eyeTilt:35,eyeSize:45,iris:'#4a3c32',lashes:0,noseType:0,noseH:50,noseW:55,noseL:55,mouthType:2,mouthH:52,mouthW:50,mouthThick:40,mouthCorner:50,earSize:65,earAngle:55,faling:40,wrinkle:35,hairStyle:4,bangs:3,hairColor:'#1f1b1d',hairpin:0,beard:0,eyeShadow:0,shadowInt:50,eyeliner:0,blush:0,lipColor:0,lipInt:50,dimple:0,forehead:2,daoMark:0,scar:0,robe:2,aura:4,halo:1}},
+  {name:'血河宗魔修',info:'血河宗 · 火靈根',p:{faceLen:66,faceWid:40,jaw:38,cheek:65,chin:20,skin:'#f1d9c6',browType:0,browH:45,browDist:40,browThick:55,browTilt:85,eyeType:2,eyeDist:48,eyeH:50,eyeTilt:80,eyeSize:42,iris:'#c43a3a',lashes:0,noseType:2,noseH:50,noseW:40,noseL:58,mouthType:2,mouthH:50,mouthW:42,mouthThick:25,mouthCorner:20,earSize:50,earAngle:30,hairStyle:2,bangs:1,hairColor:'#1f1b1d',hairpin:0,beard:0,eyeShadow:1,shadowInt:75,eyeliner:2,blush:0,lipColor:3,lipInt:55,dimple:0,forehead:0,daoMark:2,scar:1,robe:3,aura:3,halo:0}},
+  {name:'萬妖山妖修',info:'萬妖山 · 雷靈根',p:{faceLen:55,faceWid:50,jaw:55,cheek:60,chin:35,skin:'#d9b592',browType:3,browH:50,browDist:45,browThick:70,browTilt:70,eyeType:0,eyeDist:55,eyeH:50,eyeTilt:75,eyeSize:55,iris:'#e0a030',lashes:0,noseType:0,noseH:50,noseW:50,noseL:50,mouthType:1,mouthH:50,mouthW:55,mouthThick:35,mouthCorner:70,earSize:60,earAngle:70,freckles:1,hairStyle:1,bangs:1,hairColor:'#6b3f2a',hairpin:0,beard:0,eyeShadow:4,shadowInt:45,eyeliner:2,blush:20,lipColor:0,lipInt:50,dimple:0,forehead:0,daoMark:1,scar:0,robe:4,aura:5,halo:0}},
+  {name:'逍遙居散修',info:'逍遙居 · 水靈根',p:{faceLen:52,faceWid:52,jaw:65,cheek:50,chin:55,skin:'#e9cdb5',browType:3,browH:55,browDist:50,browThick:75,browTilt:30,eyeType:3,eyeDist:50,eyeH:50,eyeTilt:30,eyeSize:50,iris:'#3d6fb8',lashes:0,noseType:2,noseH:50,noseW:55,noseL:55,mouthType:1,mouthH:50,mouthW:55,mouthThick:40,mouthCorner:85,earSize:55,earAngle:50,faling:55,wrinkle:60,mole:2,hairStyle:3,bangs:1,hairColor:'#8a8f99',hairpin:0,beard:3,eyeShadow:0,shadowInt:50,eyeliner:0,blush:15,lipColor:0,lipInt:50,dimple:0,forehead:0,daoMark:0,scar:2,robe:5,aura:2,halo:0}}
 ];
+function fromPreset(i){const o=Object.assign({},DEFAULTS,PRESETS[i].p);SIDE_KEYS.forEach(k=>{o[k+'_L']=o[k];o[k+'_R']=o[k];});o.sym=1;o.light=1;return o;}
 
-let P={}, currentPreset=0;
+let P=fromPreset(0), currentPreset=0, activeCat='bone', activeSide=-1, cam='full', compareBase=null;
+const sv=(k,side)=>P.sym?P[k]:P[k+(side<0?'_L':'_R')];
+function setSide(k,side,v){if(P.sym){P[k]=v;P[k+'_L']=v;P[k+'_R']=v;}else{P[k+(side<0?'_L':'_R')]=v;P[k]=Math.round((P[k+'_L']+P[k+'_R'])/2);}}
 
-/* ---------- geometry helpers ---------- */
-function smoothClosed(pts){
-  const n=pts.length;let d=`M${f(pts[0][0])} ${f(pts[0][1])}`;
-  for(let i=0;i<n;i++){
-    const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
-    d+=` C${f(p1[0]+(p2[0]-p0[0])/6)} ${f(p1[1]+(p2[1]-p0[1])/6)} ${f(p2[0]-(p3[0]-p1[0])/6)} ${f(p2[1]-(p3[1]-p1[1])/6)} ${f(p2[0])} ${f(p2[1])}`;
-  }
-  return d+'Z';
-}
+function smoothClosed(pts){const n=pts.length;let d=`M${f(pts[0][0])} ${f(pts[0][1])}`;for(let i=0;i<n;i++){const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];d+=` C${f(p1[0]+(p2[0]-p0[0])/6)} ${f(p1[1]+(p2[1]-p0[1])/6)} ${f(p2[0]-(p3[0]-p1[0])/6)} ${f(p2[1]-(p3[1]-p1[1])/6)} ${f(p2[0])} ${f(p2[1])}`;}return d+'Z';}
 function qpt(p0,p1,p2,t){const u=1-t;return [u*u*p0[0]+2*u*t*p1[0]+t*t*p2[0],u*u*p0[1]+2*u*t*p1[1]+t*t*p2[1]];}
-// tapered stroke along quadratic curve: thickness w at start, w*endF at end
-function taperedQuad(p0,p1,p2,w,endF,startF){
-  const up=[],dn=[];const N=14;
-  for(let i=0;i<=N;i++){
-    const t=i/N;const p=qpt(p0,p1,p2,t);
-    const q=qpt(p0,p1,p2,Math.min(1,t+0.01)),r=qpt(p0,p1,p2,Math.max(0,t-0.01));
-    let dx=q[0]-r[0],dy=q[1]-r[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;
-    const nx=-dy,ny=dx;
-    const th=w*((startF!==undefined?startF:0.6)+(1-(startF!==undefined?startF:0.6))*Math.sin(Math.PI*Math.min(1,t*1.15)))*(1-(1-endF)*t);
-    up.push([p[0]+nx*th/2,p[1]+ny*th/2]);dn.push([p[0]-nx*th/2,p[1]-ny*th/2]);
-  }
-  const all=up.concat(dn.reverse());
-  return 'M'+all.map(p=>f(p[0])+' '+f(p[1])).join(' L ')+'Z';
-}
+function taperedQuad(p0,p1,p2,w,endF,startF){const up=[],dn=[];const N=14;for(let i=0;i<=N;i++){const t=i/N;const p=qpt(p0,p1,p2,t);const q=qpt(p0,p1,p2,Math.min(1,t+0.01)),r=qpt(p0,p1,p2,Math.max(0,t-0.01));let dx=q[0]-r[0],dy=q[1]-r[1];const l=Math.hypot(dx,dy)||1;dx/=l;dy/=l;const nx=-dy,ny=dx;const sf=startF!==undefined?startF:0.6;const th=w*(sf+(1-sf)*Math.sin(Math.PI*Math.min(1,t*1.15)))*(1-(1-endF)*t);up.push([p[0]+nx*th/2,p[1]+ny*th/2]);dn.push([p[0]-nx*th/2,p[1]-ny*th/2]);}const all=up.concat(dn.reverse());return 'M'+all.map(p=>f(p[0])+' '+f(p[1])).join(' L ')+'Z';}
 
-/* ---------- renderer ---------- */
-function render(){
+/* ---------- renderer: draws P into svgEl, returns drag handles ---------- */
+function render(svgEl,P,opts){
+  opts=opts||{};const thumb=!!opts.thumb;
+  const sv=(k,side)=>P.sym?P[k]:P[k+(side<0?'_L':'_R')];
   const cx=300, cy=345;
   const L=lerp(126,176,P.faceLen), W=lerp(86,122,P.faceWid);
   const jawF=lerp(0.52,0.95,P.jaw), cheekF=lerp(0.9,1.08,P.cheek), chinF=lerp(0.1,0.55,P.chin);
   const sW=W/105, sL=L/150;
-  const skin=P.skin, skinSh=mix(skin,'#7a5a55',0.22), skinSh2=mix(skin,'#7a5a55',0.10), lip=mix(skin,'#b8555a',0.45), lipLt=mix(skin,'#b8555a',0.22);
+  const skin=P.skin, skinSh=mix(skin,'#7a5a55',0.22), skinSh2=mix(skin,'#7a5a55',0.10);
+  const lipBase=LIPS[P.lipColor][1]?mix(mix(skin,'#b8555a',0.35),LIPS[P.lipColor][1],lerp(0.2,0.95,P.lipInt)):mix(skin,'#b8555a',0.45);
+  const lip=lipBase, lipLt=mix(lipBase,skin,0.45);
   const hair=P.hairColor, hairDk=luma(hair)>0.6?mix(hair,'#8fa3b8',0.45):shade(hair,0.35), hairLt=luma(hair)>0.6?'#ffffff':tint(hair,0.35);
   const INK='#1d2530';
   const robe=ROBES[P.robe], aura=AURAS[P.aura][1];
   const y0=cy-L*0.98, yh=y0-14;
+  const lightDir=P.light===0?-1:P.light===2?1:0;
   const out=[];const a=s=>out.push(s);
+  const H=[];
+  const FLT=thumb?'':'filter="url(#soft)"', INKF=thumb?'':'filter="url(#ink)"';
+  const u=thumb?'t':'m'; // id namespace so thumbnails do not collide with the main stage
 
-  /* defs */
   a(`<defs>
-    <radialGradient id="gPaper" cx="0.5" cy="0.42" r="0.75"><stop offset="0" stop-color="#f9fbfd"/><stop offset="0.6" stop-color="#e9eef4"/><stop offset="1" stop-color="#d3dce6"/></radialGradient>
-    <radialGradient id="gAura" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="${aura}" stop-opacity="0.55"/><stop offset="0.55" stop-color="${aura}" stop-opacity="0.18"/><stop offset="1" stop-color="${aura}" stop-opacity="0"/></radialGradient>
-    <radialGradient id="gLight" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff8e6" stop-opacity="0.9"/><stop offset="1" stop-color="#fff8e6" stop-opacity="0"/></radialGradient>
-    <linearGradient id="gRobe" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${tint(robe[1],0.15)}"/><stop offset="1" stop-color="${shade(robe[1],0.12)}"/></linearGradient>
+    <radialGradient id="gPaper${u}" cx="0.5" cy="0.42" r="0.75"><stop offset="0" stop-color="#f9fbfd"/><stop offset="0.6" stop-color="#e9eef4"/><stop offset="1" stop-color="#d3dce6"/></radialGradient>
+    <radialGradient id="gAura${u}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="${aura}" stop-opacity="0.55"/><stop offset="0.55" stop-color="${aura}" stop-opacity="0.18"/><stop offset="1" stop-color="${aura}" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gLight${u}" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#fff8e6" stop-opacity="0.9"/><stop offset="1" stop-color="#fff8e6" stop-opacity="0"/></radialGradient>
+    <linearGradient id="gRobe${u}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${tint(robe[1],0.15)}"/><stop offset="1" stop-color="${shade(robe[1],0.12)}"/></linearGradient>
+    <linearGradient id="gFace${u}" x1="${lightDir<0?0:1}" y1="0" x2="${lightDir<0?1:0}" y2="0"><stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/><stop offset="0.5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="${skinSh}" stop-opacity="${lightDir===0?0:0.42}"/></linearGradient>
     <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="10"/></filter>
     <filter id="ink" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4"/></filter>
-    <clipPath id="clipL"><path id="eyeClipL"/></clipPath>
-    <clipPath id="clipR"><path id="eyeClipR"/></clipPath>
+    <clipPath id="clipL${u}"><path class="eyeClipL"/></clipPath>
+    <clipPath id="clipR${u}"><path class="eyeClipR"/></clipPath>
+    <clipPath id="clipFace${u}"><path class="faceClip"/></clipPath>
   </defs>`);
 
-  /* background */
-  a(`<rect width="600" height="760" fill="url(#gPaper)"/>`);
-  a(`<path d="M0 640 L60 600 L130 630 L200 590 L280 640 L360 600 L440 625 L520 585 L600 630 L600 760 L0 760Z" fill="#8fa0b4" opacity="0.28" filter="url(#ink)"/>`);
-  a(`<path d="M0 700 L80 670 L160 690 L250 660 L340 700 L430 670 L520 690 L600 665 L600 760 L0 760Z" fill="#6d7f96" opacity="0.32" filter="url(#ink)"/>`);
-  a(`<circle cx="${cx}" cy="${f(cy-L*0.1)}" r="${f(L*1.35)}" fill="url(#gLight)"/>`);
-  // decorative sword auras
-  const swords=[[70,120,-20],[530,110,25],[40,330,-35],[560,340,35],[110,520,-50],[500,540,50],[300,60,0],[200,80,-10],[400,80,10]];
-  swords.forEach(([x,y,r])=>a(`<g transform="translate(${x} ${y}) rotate(${r})" opacity="0.28"><path d="M0 -34 L4 -22 L4 16 L9 19 L9 22 L4 22 L3 32 L-3 32 L-4 22 L-9 22 L-9 19 L-4 16 L-4 -22Z" fill="${aura}" stroke="#ffffff" stroke-width="0.8"/></g>`));
-  a(`<ellipse cx="${cx}" cy="${f(cy+L*0.6)}" rx="${f(W*2.6)}" ry="${f(L*2.2)}" fill="url(#gAura)"/>`);
-  if(P.halo===1){
-    a(`<circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.45)}" fill="none" stroke="#d9b45a" stroke-width="3" opacity="0.6"/>`);
-    a(`<circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.56)}" fill="none" stroke="#e8cd85" stroke-width="1.2" opacity="0.55" stroke-dasharray="5 9"/>`);
-    a(`<circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.36)}" fill="none" stroke="#f1dc9c" stroke-width="1" opacity="0.6"/>`);
-  }
+  a(`<rect width="600" height="760" fill="url(#gPaper${u})"/>`);
+  a(`<path d="M0 640 L60 600 L130 630 L200 590 L280 640 L360 600 L440 625 L520 585 L600 630 L600 760 L0 760Z" fill="#8fa0b4" opacity="0.28" ${INKF}/>`);
+  a(`<path d="M0 700 L80 670 L160 690 L250 660 L340 700 L430 670 L520 690 L600 665 L600 760 L0 760Z" fill="#6d7f96" opacity="0.32" ${INKF}/>`);
+  a(`<circle cx="${cx}" cy="${f(cy-L*0.1)}" r="${f(L*1.35)}" fill="url(#gLight${u})"/>`);
+  if(!thumb){const swords=[[70,120,-20],[530,110,25],[40,330,-35],[560,340,35],[110,520,-50],[500,540,50],[300,60,0],[200,80,-10],[400,80,10]];
+    swords.forEach(([x,y,r])=>a(`<g transform="translate(${x} ${y}) rotate(${r})" opacity="0.28"><path d="M0 -34 L4 -22 L4 16 L9 19 L9 22 L4 22 L3 32 L-3 32 L-4 22 L-9 22 L-9 19 L-4 16 L-4 -22Z" fill="${aura}" stroke="#ffffff" stroke-width="0.8"/></g>`));}
+  a(`<ellipse cx="${cx}" cy="${f(cy+L*0.6)}" rx="${f(W*2.6)}" ry="${f(L*2.2)}" fill="url(#gAura${u})"/>`);
+  if(P.halo===1){a(`<circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.45)}" fill="none" stroke="#d9b45a" stroke-width="3" opacity="0.6"/><circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.56)}" fill="none" stroke="#e8cd85" stroke-width="1.2" opacity="0.55" stroke-dasharray="5 9"/><circle cx="${cx}" cy="${f(cy+L*0.15)}" r="${f(L*1.36)}" fill="none" stroke="#f1dc9c" stroke-width="1" opacity="0.6"/>`);}
 
   const inkAttr=`stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
   const inkThin=`stroke="${INK}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"`;
   const hs=P.hairStyle, bald=hs===4;
 
-  /* ---- back hair ---- */
+  /* back hair */
   const hairLines=[];
   if(!bald){
     let d='';
     if(hs===0){
-      d=`M${f(cx-W*1.08)} ${f(cy-L*0.45)} C${f(cx-W*0.9)} ${f(yh-22)} ${f(cx+W*0.9)} ${f(yh-22)} ${f(cx+W*1.08)} ${f(cy-L*0.45)}
-         C${f(cx+W*1.2)} ${f(cy)} ${f(cx+W*1.5)} ${f(cy+L*0.3)} ${f(cx+W*2.35)} ${f(cy+L*0.42)}
-         C${f(cx+W*1.95)} ${f(cy+L*0.56)} ${f(cx+W*1.75)} ${f(cy+L*0.66)} ${f(cx+W*2.55)} ${f(cy+L*0.92)}
-         C${f(cx+W*1.95)} ${f(cy+L*0.98)} ${f(cx+W*1.55)} ${f(cy+L*1.0)} ${f(cx+W*1.4)} ${f(cy+L*1.2)}
-         C${f(cx+W*1.35)} ${f(cy+L*1.6)} ${f(cx+W*1.25)} ${f(cy+L*2.0)} ${f(cx+W*1.15)} ${f(cy+L*2.4)}
-         L${f(cx-W*1.2)} ${f(cy+L*2.4)}
-         C${f(cx-W*1.3)} ${f(cy+L*1.6)} ${f(cx-W*1.32)} ${f(cy+L*0.8)} ${f(cx-W*1.08)} ${f(cy-L*0.45)}Z`;
-      hairLines.push(`M${f(cx+W*1.1)} ${f(cy-L*0.1)} C${f(cx+W*1.5)} ${f(cy+L*0.2)} ${f(cx+W*1.9)} ${f(cy+L*0.35)} ${f(cx+W*2.2)} ${f(cy+L*0.42)}`);
-      hairLines.push(`M${f(cx+W*1.15)} ${f(cy+L*0.45)} C${f(cx+W*1.6)} ${f(cy+L*0.7)} ${f(cx+W*1.9)} ${f(cy+L*0.8)} ${f(cx+W*2.3)} ${f(cy+L*0.9)}`);
-      hairLines.push(`M${f(cx-W*1.12)} ${f(cy)} C${f(cx-W*1.22)} ${f(cy+L*0.6)} ${f(cx-W*1.22)} ${f(cy+L*1.2)} ${f(cx-W*1.18)} ${f(cy+L*1.8)}`);
+      d=`M${f(cx-W*1.08)} ${f(cy-L*0.45)} C${f(cx-W*0.9)} ${f(yh-22)} ${f(cx+W*0.9)} ${f(yh-22)} ${f(cx+W*1.08)} ${f(cy-L*0.45)} C${f(cx+W*1.2)} ${f(cy)} ${f(cx+W*1.5)} ${f(cy+L*0.3)} ${f(cx+W*2.35)} ${f(cy+L*0.42)} C${f(cx+W*1.95)} ${f(cy+L*0.56)} ${f(cx+W*1.75)} ${f(cy+L*0.66)} ${f(cx+W*2.55)} ${f(cy+L*0.92)} C${f(cx+W*1.95)} ${f(cy+L*0.98)} ${f(cx+W*1.55)} ${f(cy+L*1.0)} ${f(cx+W*1.4)} ${f(cy+L*1.2)} C${f(cx+W*1.35)} ${f(cy+L*1.6)} ${f(cx+W*1.25)} ${f(cy+L*2.0)} ${f(cx+W*1.15)} ${f(cy+L*2.4)} L${f(cx-W*1.2)} ${f(cy+L*2.4)} C${f(cx-W*1.3)} ${f(cy+L*1.6)} ${f(cx-W*1.32)} ${f(cy+L*0.8)} ${f(cx-W*1.08)} ${f(cy-L*0.45)}Z`;
+      hairLines.push(`M${f(cx+W*1.1)} ${f(cy-L*0.1)} C${f(cx+W*1.5)} ${f(cy+L*0.2)} ${f(cx+W*1.9)} ${f(cy+L*0.35)} ${f(cx+W*2.2)} ${f(cy+L*0.42)}`,`M${f(cx+W*1.15)} ${f(cy+L*0.45)} C${f(cx+W*1.6)} ${f(cy+L*0.7)} ${f(cx+W*1.9)} ${f(cy+L*0.8)} ${f(cx+W*2.3)} ${f(cy+L*0.9)}`,`M${f(cx-W*1.12)} ${f(cy)} C${f(cx-W*1.22)} ${f(cy+L*0.6)} ${f(cx-W*1.22)} ${f(cy+L*1.2)} ${f(cx-W*1.18)} ${f(cy+L*1.8)}`);
     }else if(hs===1){
-      d=`M${f(cx-W*1.06)} ${f(cy-L*0.4)} C${f(cx-W*0.9)} ${f(yh-16)} ${f(cx+W*0.9)} ${f(yh-16)} ${f(cx+W*1.06)} ${f(cy-L*0.4)}
-         C${f(cx+W*1.12)} ${f(cy-L*0.1)} ${f(cx+W*1.1)} ${f(cy+L*0.2)} ${f(cx+W*1.0)} ${f(cy+L*0.45)}
-         L${f(cx-W*1.0)} ${f(cy+L*0.45)} C${f(cx-W*1.1)} ${f(cy+L*0.2)} ${f(cx-W*1.12)} ${f(cy-L*0.1)} ${f(cx-W*1.06)} ${f(cy-L*0.4)}Z
-         M${f(cx+W*0.2)} ${f(yh-8)} C${f(cx+W*1.3)} ${f(yh-30)} ${f(cx+W*2.3)} ${f(cy+L*0.1)} ${f(cx+W*2.2)} ${f(cy+L*0.9)}
-         C${f(cx+W*2.0)} ${f(cy+L*0.55)} ${f(cx+W*1.7)} ${f(cy+L*0.35)} ${f(cx+W*1.35)} ${f(cy+L*0.5)}
-         C${f(cx+W*1.5)} ${f(cy+L*0.2)} ${f(cx+W*1.2)} ${f(cy-L*0.3)} ${f(cx+W*0.5)} ${f(cy-L*0.55)}Z`;
+      d=`M${f(cx-W*1.06)} ${f(cy-L*0.4)} C${f(cx-W*0.9)} ${f(yh-16)} ${f(cx+W*0.9)} ${f(yh-16)} ${f(cx+W*1.06)} ${f(cy-L*0.4)} C${f(cx+W*1.12)} ${f(cy-L*0.1)} ${f(cx+W*1.1)} ${f(cy+L*0.2)} ${f(cx+W*1.0)} ${f(cy+L*0.45)} L${f(cx-W*1.0)} ${f(cy+L*0.45)} C${f(cx-W*1.1)} ${f(cy+L*0.2)} ${f(cx-W*1.12)} ${f(cy-L*0.1)} ${f(cx-W*1.06)} ${f(cy-L*0.4)}Z M${f(cx+W*0.2)} ${f(yh-8)} C${f(cx+W*1.3)} ${f(yh-30)} ${f(cx+W*2.3)} ${f(cy+L*0.1)} ${f(cx+W*2.2)} ${f(cy+L*0.9)} C${f(cx+W*2.0)} ${f(cy+L*0.55)} ${f(cx+W*1.7)} ${f(cy+L*0.35)} ${f(cx+W*1.35)} ${f(cy+L*0.5)} C${f(cx+W*1.5)} ${f(cy+L*0.2)} ${f(cx+W*1.2)} ${f(cy-L*0.3)} ${f(cx+W*0.5)} ${f(cy-L*0.55)}Z`;
       hairLines.push(`M${f(cx+W*0.9)} ${f(cy-L*0.5)} C${f(cx+W*1.6)} ${f(cy-L*0.3)} ${f(cx+W*2.0)} ${f(cy+L*0.2)} ${f(cx+W*2.05)} ${f(cy+L*0.7)}`);
     }else if(hs===2||hs===5){
-      d=`M${f(cx-W*1.08)} ${f(cy-L*0.45)} C${f(cx-W*0.9)} ${f(yh-22)} ${f(cx+W*0.9)} ${f(yh-22)} ${f(cx+W*1.08)} ${f(cy-L*0.45)}
-         C${f(cx+W*1.3)} ${f(cy+L*0.3)} ${f(cx+W*1.4)} ${f(cy+L*1.2)} ${f(cx+W*1.3)} ${f(cy+L*2.4)}
-         L${f(cx-W*1.3)} ${f(cy+L*2.4)}
-         C${f(cx-W*1.4)} ${f(cy+L*1.2)} ${f(cx-W*1.3)} ${f(cy+L*0.3)} ${f(cx-W*1.08)} ${f(cy-L*0.45)}Z`;
-      hairLines.push(`M${f(cx+W*1.12)} ${f(cy)} C${f(cx+W*1.25)} ${f(cy+L*0.6)} ${f(cx+W*1.28)} ${f(cy+L*1.2)} ${f(cx+W*1.22)} ${f(cy+L*1.8)}`);
-      hairLines.push(`M${f(cx-W*1.12)} ${f(cy)} C${f(cx-W*1.25)} ${f(cy+L*0.6)} ${f(cx-W*1.28)} ${f(cy+L*1.2)} ${f(cx-W*1.22)} ${f(cy+L*1.8)}`);
+      d=`M${f(cx-W*1.08)} ${f(cy-L*0.45)} C${f(cx-W*0.9)} ${f(yh-22)} ${f(cx+W*0.9)} ${f(yh-22)} ${f(cx+W*1.08)} ${f(cy-L*0.45)} C${f(cx+W*1.3)} ${f(cy+L*0.3)} ${f(cx+W*1.4)} ${f(cy+L*1.2)} ${f(cx+W*1.3)} ${f(cy+L*2.4)} L${f(cx-W*1.3)} ${f(cy+L*2.4)} C${f(cx-W*1.4)} ${f(cy+L*1.2)} ${f(cx-W*1.3)} ${f(cy+L*0.3)} ${f(cx-W*1.08)} ${f(cy-L*0.45)}Z`;
+      hairLines.push(`M${f(cx+W*1.12)} ${f(cy)} C${f(cx+W*1.25)} ${f(cy+L*0.6)} ${f(cx+W*1.28)} ${f(cy+L*1.2)} ${f(cx+W*1.22)} ${f(cy+L*1.8)}`,`M${f(cx-W*1.12)} ${f(cy)} C${f(cx-W*1.25)} ${f(cy+L*0.6)} ${f(cx-W*1.28)} ${f(cy+L*1.2)} ${f(cx-W*1.22)} ${f(cy+L*1.8)}`);
     }else if(hs===3){
-      const pts=[[cx-W*1.06,cy-L*0.4],[cx-W*0.85,yh-12],[cx,yh-22],[cx+W*0.85,yh-12],[cx+W*1.06,cy-L*0.4],[cx+W*1.1,cy+L*0.1],[cx+W*0.98,cy+L*0.35],[cx+W*0.75,cy+L*0.28],[cx+W*0.55,cy+L*0.4],[cx-W*0.55,cy+L*0.4],[cx-W*0.75,cy+L*0.28],[cx-W*0.98,cy+L*0.35],[cx-W*1.1,cy+L*0.1]];
-      d=smoothClosed(pts);
+      d=smoothClosed([[cx-W*1.06,cy-L*0.4],[cx-W*0.85,yh-12],[cx,yh-22],[cx+W*0.85,yh-12],[cx+W*1.06,cy-L*0.4],[cx+W*1.1,cy+L*0.1],[cx+W*0.98,cy+L*0.35],[cx+W*0.75,cy+L*0.28],[cx+W*0.55,cy+L*0.4],[cx-W*0.55,cy+L*0.4],[cx-W*0.75,cy+L*0.28],[cx-W*0.98,cy+L*0.35],[cx-W*1.1,cy+L*0.1]]);
     }
     a(`<path d="${d}" fill="${hair}" ${inkAttr}/>`);
     hairLines.forEach(l=>a(`<path d="${l}" fill="none" stroke="${hairDk}" stroke-width="2"/>`));
   }
 
-  /* ---- neck & robe ---- */
+  /* neck & robe */
   const nw=W*0.3, ny=cy+L*0.8, nb=cy+L*1.32;
   a(`<path d="M${f(cx-nw)} ${f(ny)} L${f(cx-nw*1.05)} ${f(nb)} L${f(cx+nw*1.05)} ${f(nb)} L${f(cx+nw)} ${f(ny)}Z" fill="${skinSh2}" ${inkThin}/>`);
   a(`<path d="M${f(cx-nw*0.9)} ${f(ny+2)} C${f(cx-nw*0.5)} ${f(ny+22)} ${f(cx+nw*0.5)} ${f(ny+22)} ${f(cx+nw*0.9)} ${f(ny+2)} L${f(cx+nw*0.9)} ${f(ny+34)} L${f(cx-nw*0.9)} ${f(ny+34)}Z" fill="${skinSh}" opacity="0.55"/>`);
   const shY=cy+L*1.22;
-  a(`<path d="M${f(cx-W*2.4)} 760 C${f(cx-W*2.3)} ${f(shY+L*0.7)} ${f(cx-W*1.7)} ${f(shY+2)} ${f(cx-W*0.4)} ${f(shY)} L${f(cx+W*0.4)} ${f(shY)} C${f(cx+W*1.7)} ${f(shY+2)} ${f(cx+W*2.3)} ${f(shY+L*0.7)} ${f(cx+W*2.4)} 760Z" fill="url(#gRobe)" ${inkAttr}/>`);
-  // cross collar (right under, left over): filled lapels with trim on the inner edge
+  a(`<path d="M${f(cx-W*2.4)} 760 C${f(cx-W*2.3)} ${f(shY+L*0.7)} ${f(cx-W*1.7)} ${f(shY+2)} ${f(cx-W*0.4)} ${f(shY)} L${f(cx+W*0.4)} ${f(shY)} C${f(cx+W*1.7)} ${f(shY+2)} ${f(cx+W*2.3)} ${f(shY+L*0.7)} ${f(cx+W*2.4)} 760Z" fill="url(#gRobe${u})" ${inkAttr}/>`);
   const colTop=shY-4, colBot=cy+L*1.95;
   function lapel(side,over){
     const s=side;
     const ix0=cx+W*0.72*s, iy0=colTop, ix1=cx-W*0.05*s+(over?W*0.1*s:0), iy1=colBot+(over?6:0);
     const ox0=cx+W*1.12*s, oy0=colTop+10, ox1=cx+W*0.32*s, oy1=colBot+26;
-    const c1x=cx+W*0.35*s, c1y=colTop+L*0.25, c2x=cx+W*0.05*s, c2y=colBot-L*0.2;
-    const inner=`M${f(ix0)} ${f(iy0)} C${f(c1x)} ${f(c1y)} ${f(c2x)} ${f(c2y)} ${f(ix1)} ${f(iy1)}`;
+    const inner=`M${f(ix0)} ${f(iy0)} C${f(cx+W*0.35*s)} ${f(colTop+L*0.25)} ${f(cx+W*0.05*s)} ${f(colBot-L*0.2)} ${f(ix1)} ${f(iy1)}`;
     const shape=`${inner} L${f(ox1)} ${f(oy1)} C${f(cx+W*0.4*s)} ${f(colBot-L*0.15)} ${f(cx+W*0.75*s)} ${f(colTop+L*0.3)} ${f(ox0)} ${f(oy0)}Z`;
-    let out=`<path d="${shape}" fill="url(#gRobe)" ${inkAttr}/>`;
-    out+=`<path d="${inner}" fill="none" stroke="${robe[2]}" stroke-width="12" stroke-linecap="butt"/>`;
-    out+=`<path d="${inner}" fill="none" stroke="${robe[3]}" stroke-width="2"/>`;
-    out+=`<path d="${inner}" fill="none" stroke="${INK}" stroke-width="1.6" transform="translate(${f(6*s)} 0)" opacity="0.8"/>`;
-    return out;
+    return `<path d="${shape}" fill="url(#gRobe${u})" ${inkAttr}/><path d="${inner}" fill="none" stroke="${robe[2]}" stroke-width="12"/><path d="${inner}" fill="none" stroke="${robe[3]}" stroke-width="2"/><path d="${inner}" fill="none" stroke="${INK}" stroke-width="1.6" transform="translate(${f(6*s)} 0)" opacity="0.8"/>`;
   }
-  // inner white collar (中衣) peeking at the neck
   a(`<path d="M${f(cx-W*0.5)} ${f(colTop-2)} L${f(cx)} ${f(colTop+L*0.42)} L${f(cx+W*0.5)} ${f(colTop-2)}Z" fill="${tint(robe[1],0.5)}" ${inkThin}/>`);
-  a(lapel(1,false));
-  a(lapel(-1,true));
-  // shoulder cloud embroidery
+  a(lapel(1,false)); a(lapel(-1,true));
   const cloud=(x,y,s)=>`<path d="M${f(x)} ${f(y)} c-9 -8 -4 -22 9 -19 c4 -12 22 -10 25 2 c12 -3 19 10 10 18z" transform="translate(${f(x)} ${f(y)}) scale(${s}) translate(${f(-x)} ${f(-y)})" fill="none" stroke="${robe[3]}" stroke-width="2"/>`;
   a(cloud(cx-W*1.5,shY+L*0.45,0.9)); a(cloud(cx+W*1.5,shY+L*0.45,0.9)); a(cloud(cx-W*1.9,shY+L*0.9,0.7)); a(cloud(cx+W*1.9,shY+L*0.9,0.7));
 
-  /* ---- face ---- */
+  /* ears */
+  function ear(side){
+    const es=lerp(0.75,1.3,sv('earSize',side)), ang=lerp(-4,14,sv('earAngle',side))*sW;
+    const ex=cx+(W*0.98+ang)*side, ey=cy+L*0.02;
+    const rx=9*sW*es, ry=15*sL*es;
+    H.push({id:'ear'+(side<0?'L':'R'),cat:'ear',side,x:ex+rx*side,y:ey,maps:[{k:'earSize',axis:'y',scale:12,sign:1},{k:'earAngle',axis:'x',scale:18,sign:side}]});
+    return `<ellipse cx="${f(ex)}" cy="${f(ey)}" rx="${f(rx)}" ry="${f(ry)}" fill="${skin}" ${inkThin}/><path d="M${f(ex+rx*0.1*side)} ${f(ey-ry*0.5)} C${f(ex+rx*0.6*side)} ${f(ey-ry*0.2)} ${f(ex+rx*0.4*side)} ${f(ey+ry*0.3)} ${f(ex-rx*0.1*side)} ${f(ey+ry*0.5)}" fill="none" stroke="${skinSh}" stroke-width="1.6"/>`;
+  }
+  a(ear(-1)); a(ear(1));
+
+  /* face */
   const facePts=[[cx,y0],[cx+W*0.9,cy-L*0.5],[cx+W*cheekF,cy+L*0.05],[cx+W*jawF,cy+L*0.62],[cx+W*jawF*chinF,cy+L*0.96],[cx,cy+L],[cx-W*jawF*chinF,cy+L*0.96],[cx-W*jawF,cy+L*0.62],[cx-W*cheekF,cy+L*0.05],[cx-W*0.9,cy-L*0.5]];
   const faceD=smoothClosed(facePts);
-  // ears
-  const earY=cy+L*0.02;
-  a(`<ellipse cx="${f(cx-W*0.98)}" cy="${f(earY)}" rx="${f(9*sW)}" ry="${f(15*sL)}" fill="${skin}" ${inkThin}/>`);
-  a(`<ellipse cx="${f(cx+W*0.98)}" cy="${f(earY)}" rx="${f(9*sW)}" ry="${f(15*sL)}" fill="${skin}" ${inkThin}/>`);
   a(`<path d="${faceD}" fill="${skin}" ${inkAttr}/>`);
-  // jaw shading & cheek shading
+  a(`<g clip-path="url(#clipFace${u})">`);
+  a(`<rect x="0" y="0" width="600" height="760" fill="url(#gFace${u})"/>`);
   a(`<path d="M${f(cx-W*jawF*0.9)} ${f(cy+L*0.62)} C${f(cx-W*0.3)} ${f(cy+L*0.98)} ${f(cx+W*0.3)} ${f(cy+L*0.98)} ${f(cx+W*jawF*0.9)} ${f(cy+L*0.62)}" fill="none" stroke="${skinSh}" stroke-width="4" opacity="0.55"/>`);
-  a(`<ellipse cx="${f(cx-W*0.62)}" cy="${f(cy+L*0.2)}" rx="${f(W*0.22)}" ry="${f(L*0.16)}" fill="${skinSh}" opacity="0.18" filter="url(#soft)"/>`);
-  a(`<ellipse cx="${f(cx+W*0.62)}" cy="${f(cy+L*0.2)}" rx="${f(W*0.22)}" ry="${f(L*0.16)}" fill="${skinSh}" opacity="0.18" filter="url(#soft)"/>`);
+  a(`<ellipse cx="${f(cx-W*0.62)}" cy="${f(cy+L*0.2)}" rx="${f(W*0.22)}" ry="${f(L*0.16)}" fill="${skinSh}" opacity="0.18" ${FLT}/><ellipse cx="${f(cx+W*0.62)}" cy="${f(cy+L*0.2)}" rx="${f(W*0.22)}" ry="${f(L*0.16)}" fill="${skinSh}" opacity="0.18" ${FLT}/>`);
+  if(lightDir!==0){a(`<ellipse cx="${f(cx-W*0.35*lightDir)}" cy="${f(cy-L*0.35)}" rx="${f(W*0.3)}" ry="${f(L*0.2)}" fill="#ffffff" opacity="0.28" ${FLT}/><ellipse cx="${f(cx-W*0.55*lightDir)}" cy="${f(cy+L*0.25)}" rx="${f(W*0.18)}" ry="${f(L*0.1)}" fill="#ffffff" opacity="0.22" ${FLT}/>`);}
+  if(P.blush>0){const bo=lerp(0,0.55,P.blush);a(`<ellipse cx="${f(cx-W*0.6)}" cy="${f(cy+L*0.22)}" rx="${f(W*0.26)}" ry="${f(L*0.13)}" fill="#e07a86" opacity="${f(bo)}" ${FLT}/><ellipse cx="${f(cx+W*0.6)}" cy="${f(cy+L*0.22)}" rx="${f(W*0.26)}" ry="${f(L*0.13)}" fill="#e07a86" opacity="${f(bo)}" ${FLT}/>`);}
+  if(P.freckles===1){let s='';const seedPts=[[-0.55,0.18],[-0.62,0.26],[-0.48,0.28],[-0.7,0.2],[-0.42,0.2],[-0.58,0.34],[0.55,0.18],[0.62,0.26],[0.48,0.28],[0.7,0.2],[0.42,0.2],[0.58,0.34],[-0.2,0.32],[0.2,0.32],[-0.1,0.38],[0.12,0.4]];seedPts.forEach(([px,py],i)=>{s+=`<circle cx="${f(cx+W*px)}" cy="${f(cy+L*py)}" r="${1.3+(i%3)*0.4}" fill="${shade(skin,0.45)}" opacity="0.7"/>`;});a(s);}
+  a(`</g>`);
+  H.push({id:'cheekR',cat:'bone',side:1,x:cx+W*cheekF,y:cy+L*0.05,maps:[{k:'faceWid',axis:'x',scale:36,sign:1},{k:'cheek',axis:'x',scale:18,sign:1}]});
+  H.push({id:'cheekL',cat:'bone',side:-1,x:cx-W*cheekF,y:cy+L*0.05,maps:[{k:'faceWid',axis:'x',scale:36,sign:-1},{k:'cheek',axis:'x',scale:18,sign:-1}]});
+  H.push({id:'jawR',cat:'bone',side:1,x:cx+W*jawF,y:cy+L*0.62,maps:[{k:'jaw',axis:'x',scale:45,sign:1}]});
+  H.push({id:'jawL',cat:'bone',side:-1,x:cx-W*jawF,y:cy+L*0.62,maps:[{k:'jaw',axis:'x',scale:45,sign:-1}]});
+  H.push({id:'chin',cat:'bone',side:0,x:cx,y:cy+L,maps:[{k:'faceLen',axis:'y',scale:50,sign:1},{k:'chin',axis:'x',scale:34,sign:1}]});
 
-  /* ---- eyes ---- */
+  /* eyes */
   const eyeTypeRatio=[0.42,0.72,0.3,0.5][P.eyeType], eyeTypeTilt=[5,0,3,-6][P.eyeType];
-  const ey=cy-L*0.06+lerp(-16,16,P.eyeH)*sL;
-  const exo=lerp(36,64,P.eyeDist)*sW;
-  const ew=lerp(20,36,P.eyeSize)*sW, eh=ew*eyeTypeRatio*lerp(0.85,1.15,P.eyeSize);
-  const tilt=(lerp(-9,9,P.eyeTilt)+eyeTypeTilt)*sL;
   const lidW=P.eyeType===0?3.6:P.eyeType===2?3.2:2.6;
-  function eyeShape(ex,side){ // side 1 = right eye (outer corner to +x)
+  const eyeInfo={};
+  function eyeGeom(side){
+    const ey=cy-L*0.06+lerp(-16,16,sv('eyeH',side))*sL;
+    const exo=lerp(36,64,sv('eyeDist',side))*sW;
+    const ew=lerp(20,36,sv('eyeSize',side))*sW, eh=ew*eyeTypeRatio*lerp(0.85,1.15,sv('eyeSize',side));
+    const tilt=(lerp(-9,9,sv('eyeTilt',side))+eyeTypeTilt)*sL;
+    return {ex:cx+exo*side,ey,ew,eh,tilt};
+  }
+  function drawEye(side,clipId){
+    const g=eyeGeom(side);const {ex,ey,ew,eh,tilt}=g;eyeInfo[side]=g;
     const s=side;
     const ix=ex-ew*s, iy=ey+tilt*0.5, ox=ex+ew*s, oy=ey-tilt*0.5;
     const up=`M${f(ix)} ${f(iy)} C${f(ex-ew*0.45*s)} ${f(ey-eh-tilt*0.15)} ${f(ex+ew*0.35*s)} ${f(ey-eh-tilt*0.55)} ${f(ox)} ${f(oy)}`;
     const dn=`C${f(ex+ew*0.45*s)} ${f(ey+eh*0.65)} ${f(ex-ew*0.4*s)} ${f(ey+eh*0.75)} ${f(ix)} ${f(iy)}`;
-    return {full:up+' '+dn+'Z',up,ix,iy,ox,oy};
-  }
-  function drawEye(ex,side,clipId){
-    const e=eyeShape(ex,side);
+    const full=up+' '+dn+'Z';
     const irisR=Math.min(eh*1.0,ew*0.42);
-    const icx=ex+ew*0.04*side, icy=ey+eh*0.02;
-    let s='';
-    if(P.eyeShadow>0){const c=P.eyeShadow===1?'#d8707a':'#7fd4f5';s+=`<ellipse cx="${f(ex)}" cy="${f(ey-eh*0.6)}" rx="${f(ew*1.05)}" ry="${f(eh*1.3)}" fill="${c}" opacity="0.28" filter="url(#soft)"/>`;}
-    s+=`<path d="${e.full}" fill="#ffffff" stroke="${INK}" stroke-width="1.6"/>`;
-    s+=`<g clip-path="url(#${clipId})"><circle cx="${f(icx)}" cy="${f(icy)}" r="${f(irisR)}" fill="${P.iris}" stroke="${shade(P.iris,0.45)}" stroke-width="1.6"/><circle cx="${f(icx)}" cy="${f(icy)}" r="${f(irisR*0.45)}" fill="#0f1a22"/><circle cx="${f(icx-irisR*0.3*side)}" cy="${f(icy-irisR*0.35)}" r="${f(irisR*0.22)}" fill="#ffffff"/><path d="M${f(ex-ew)} ${f(ey-eh*1.3)} L${f(ex+ew)} ${f(ey-eh*1.3)} L${f(ex+ew)} ${f(ey-eh*0.35)} L${f(ex-ew)} ${f(ey-eh*0.35)}Z" fill="${INK}" opacity="0.12"/></g>`;
-    s+=`<path d="${e.up}" fill="none" stroke="${INK}" stroke-width="${lidW}" stroke-linecap="round"/>`;
-    s+=`<path d="M${f(e.ox)} ${f(e.oy)} l${f(6*side)} ${f(-3)}" stroke="${INK}" stroke-width="${lidW*0.8}" stroke-linecap="round"/>`;
-    s+=`<path d="M${f(ex-ew*0.9*side)} ${f(ey+eh*0.9)} C${f(ex-ew*0.3*side)} ${f(ey+eh*1.25)} ${f(ex+ew*0.3*side)} ${f(ey+eh*1.25)} ${f(ex+ew*0.8*side)} ${f(ey+eh*0.85)}" fill="none" stroke="${skinSh}" stroke-width="1.6" opacity="0.7"/>`;
-    if(P.lashes===1){for(let i=0;i<3;i++){const t=0.55+i*0.18;const px=ex-ew*side+2*ew*side*t;const py=ey-eh*(1-Math.abs(t-0.5)*0.6)-tilt*(t-0.5);s+=`<path d="M${f(px)} ${f(py)} l${f(3*side+i*side)} ${f(-6-i)}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`;}}
-    // crease line
-    s+=`<path d="M${f(ex-ew*0.6*side)} ${f(ey-eh*1.35)} C${f(ex-ew*0.1*side)} ${f(ey-eh*1.75)} ${f(ex+ew*0.5*side)} ${f(ey-eh*1.7)} ${f(ex+ew*0.95*side)} ${f(ey-eh*1.1-tilt*0.4)}" fill="none" stroke="${skinSh}" stroke-width="1.6" opacity="0.8"/>`;
-    return {svg:s,clip:e.full};
+    const icx=ex+ew*0.04*s, icy=ey+eh*0.02;
+    let o='';
+    const shc=SHADOWS[P.eyeShadow][1];
+    if(shc){o+=`<ellipse cx="${f(ex)}" cy="${f(ey-eh*0.6)}" rx="${f(ew*1.05)}" ry="${f(eh*1.3)}" fill="${shc}" opacity="${f(lerp(0.1,0.6,P.shadowInt))}" ${FLT}/>`;}
+    o+=`<path d="${full}" fill="#ffffff" stroke="${INK}" stroke-width="1.6"/>`;
+    o+=`<g clip-path="url(#${clipId})"><circle cx="${f(icx)}" cy="${f(icy)}" r="${f(irisR)}" fill="${P.iris}" stroke="${shade(P.iris,0.45)}" stroke-width="1.6"/><circle cx="${f(icx)}" cy="${f(icy)}" r="${f(irisR*0.45)}" fill="#0f1a22"/><circle cx="${f(icx-irisR*0.3*(lightDir||s))}" cy="${f(icy-irisR*0.35)}" r="${f(irisR*0.22)}" fill="#ffffff"/><rect x="${f(ex-ew)}" y="${f(ey-eh*1.3)}" width="${f(ew*2)}" height="${f(eh*0.95)}" fill="${INK}" opacity="0.12"/></g>`;
+    o+=`<path d="${up}" fill="none" stroke="${INK}" stroke-width="${lidW}" stroke-linecap="round"/>`;
+    if(P.eyeliner===2){o+=`<path d="M${f(ox)} ${f(oy)} l${f(11*s)} ${f(-6)}" stroke="${INK}" stroke-width="${lidW*0.9}" stroke-linecap="round"/>`;}
+    else{o+=`<path d="M${f(ox)} ${f(oy)} l${f(6*s)} ${f(-3)}" stroke="${INK}" stroke-width="${lidW*0.8}" stroke-linecap="round"/>`;}
+    if(P.eyeliner>=1){o+=`<path d="M${f(ex-ew*0.85*s)} ${f(ey+eh*0.8)} C${f(ex-ew*0.3*s)} ${f(ey+eh*1.0)} ${f(ex+ew*0.3*s)} ${f(ey+eh*0.95)} ${f(ex+ew*0.9*s)} ${f(ey+eh*0.5)}" fill="none" stroke="${INK}" stroke-width="1.4" opacity="0.8"/>`;}
+    o+=`<path d="M${f(ex-ew*0.9*s)} ${f(ey+eh*0.9)} C${f(ex-ew*0.3*s)} ${f(ey+eh*1.25)} ${f(ex+ew*0.3*s)} ${f(ey+eh*1.25)} ${f(ex+ew*0.8*s)} ${f(ey+eh*0.85)}" fill="none" stroke="${skinSh}" stroke-width="1.6" opacity="0.7"/>`;
+    if(P.wocan===1){o+=`<path d="M${f(ex-ew*0.8*s)} ${f(ey+eh*1.0)} C${f(ex-ew*0.3*s)} ${f(ey+eh*1.9)} ${f(ex+ew*0.4*s)} ${f(ey+eh*1.9)} ${f(ex+ew*0.85*s)} ${f(ey+eh*0.9)}" fill="#ffffff" opacity="0.35"/><path d="M${f(ex-ew*0.75*s)} ${f(ey+eh*1.05)} C${f(ex-ew*0.3*s)} ${f(ey+eh*2.0)} ${f(ex+ew*0.4*s)} ${f(ey+eh*2.0)} ${f(ex+ew*0.8*s)} ${f(ey+eh*0.95)}" fill="none" stroke="${skinSh}" stroke-width="1.2" opacity="0.6"/>`;}
+    if(P.lashes===1){for(let i=0;i<3;i++){const t=0.55+i*0.18;const px=ex-ew*s+2*ew*s*t;const py=ey-eh*(1-Math.abs(t-0.5)*0.6)-tilt*(t-0.5);o+=`<path d="M${f(px)} ${f(py)} l${f(3*s+i*s)} ${f(-6-i)}" stroke="${INK}" stroke-width="1.6" stroke-linecap="round"/>`;}}
+    o+=`<path d="M${f(ex-ew*0.6*s)} ${f(ey-eh*1.35)} C${f(ex-ew*0.1*s)} ${f(ey-eh*1.75)} ${f(ex+ew*0.5*s)} ${f(ey-eh*1.7)} ${f(ex+ew*0.95*s)} ${f(ey-eh*1.1-tilt*0.4)}" fill="none" stroke="${skinSh}" stroke-width="1.6" opacity="0.8"/>`;
+    if(P.wrinkle>0){const wo=lerp(0,0.8,P.wrinkle);o+=`<path d="M${f(ox+4*s)} ${f(oy-2)} l${f(10*s)} ${f(-5)} M${f(ox+4*s)} ${f(oy+3)} l${f(11*s)} ${f(1)} M${f(ox+3*s)} ${f(oy+8)} l${f(9*s)} ${f(6)}" fill="none" stroke="${skinSh}" stroke-width="1.3" opacity="${f(wo)}" stroke-linecap="round"/>`;}
+    const sd=side<0?'L':'R';
+    H.push({id:'eye'+sd,cat:'eye',side,x:ex,y:ey,maps:[{k:'eyeDist',axis:'x',scale:28,sign:side},{k:'eyeH',axis:'y',scale:32,sign:1}]});
+    H.push({id:'eyeO'+sd,cat:'eye',side,x:ox,y:oy,maps:[{k:'eyeTilt',axis:'y',scale:18,sign:-1}]});
+    H.push({id:'eyeT'+sd,cat:'eye',side,x:ex,y:ey-eh,maps:[{k:'eyeSize',axis:'y',scale:16,sign:-1}]});
+    return {svg:o,clip:full};
   }
-  const eyeL=drawEye(cx-exo,-1,'clipL'), eyeR=drawEye(cx+exo,1,'clipR');
+  const eyeL=drawEye(-1,'clipL'+u), eyeR=drawEye(1,'clipR'+u);
 
-  /* ---- brows ---- */
+  /* brows */
   const bt=P.browType;
   const browBase=[{arch:7,lift:9,w:5.2,endF:0.35},{arch:11,lift:-2,w:3.4,endF:0.3},{arch:2,lift:0,w:5.4,endF:0.8},{arch:5,lift:4,w:8,endF:0.7}][bt];
-  const by=ey-eh-lerp(12,32,P.browH)*sL;
-  const bw=browBase.w*lerp(0.7,1.4,P.browThick);
-  const blift=(browBase.lift+lerp(-9,9,P.browTilt))*sL;
-  function brow(ex,side){
-    const ix=ex-(ew*0.95+lerp(-8,8,P.browDist)*sW)*side, ox=ex+ew*1.2*side;
+  const browCol=luma(hair)>0.6?'#3b4656':shade(hair,0.2);
+  function brow(side){
+    const g=eyeInfo[side];const {ex,ey,ew,eh}=g;
+    const by=ey-eh-lerp(12,32,sv('browH',side))*sL;
+    const bw=browBase.w*lerp(0.7,1.4,sv('browThick',side));
+    const blift=(browBase.lift+lerp(-9,9,sv('browTilt',side)))*sL;
+    const ix=ex-(ew*0.95+lerp(8,-8,sv('browDist',side))*sW)*side, ox=ex+ew*1.2*side;
     const iy=by+3, oy=by-blift;
     const px=ix+(ox-ix)*0.62, py=Math.min(iy,oy)-browBase.arch*sL;
-    return taperedQuad([ix,iy],[px,py],[ox,oy],bw,browBase.endF,bt===0?0.75:0.55);
+    const sd=side<0?'L':'R';
+    H.push({id:'brow'+sd,cat:'brow',side,x:(ix+ox)/2,y:py+4,maps:[{k:'browH',axis:'y',scale:20,sign:-1},{k:'browDist',axis:'x',scale:16,sign:side}]});
+    H.push({id:'browO'+sd,cat:'brow',side,x:ox,y:oy,maps:[{k:'browTilt',axis:'y',scale:18,sign:-1}]});
+    return `<path d="${taperedQuad([ix,iy],[px,py],[ox,oy],bw,browBase.endF,bt===0?0.75:0.55)}" fill="${browCol}"/>`;
   }
-  const browCol=luma(hair)>0.6?'#3b4656':shade(hair,0.2);
-  const browsSvg=`<path d="${brow(cx-exo,-1)}" fill="${browCol}"/><path d="${brow(cx+exo,1)}" fill="${browCol}"/>`;
+  const browsSvg=brow(-1)+brow(1);
+  const ey=(eyeInfo[-1].ey+eyeInfo[1].ey)/2, eh=(eyeInfo[-1].eh+eyeInfo[1].eh)/2;
 
-  /* ---- nose ---- */
+  /* nose */
   const nY=lerp(-8,8,P.noseH)*sL;
   const nTop=ey+6*sL+nY, nTip=ey+lerp(40,66,P.noseL)*sL+nY, nw2=lerp(8,18,P.noseW)*sW;
+  const ld=lightDir===0?-1:lightDir;
+  const sd_=-ld;
   let noseSvg='';
-  const nc=skinSh, ncS=`stroke="${nc}" stroke-width="2.2" stroke-linecap="round" fill="none"`;
+  const ncS=`stroke="${skinSh}" stroke-width="2.2" stroke-linecap="round" fill="none"`;
   if(P.noseType===0){
-    noseSvg+=`<path d="M${f(cx-3*sW)} ${f(nTop)} C${f(cx-5*sW)} ${f(nTop+(nTip-nTop)*0.4)} ${f(cx-nw2*0.55)} ${f(nTip-8)} ${f(cx-nw2*0.5)} ${f(nTip)} C${f(cx-nw2*0.3)} ${f(nTip+4)} ${f(cx)} ${f(nTip+5)} ${f(cx+nw2*0.35)} ${f(nTip+1)}" ${ncS}/>`;
-    noseSvg+=`<path d="M${f(cx+nw2*0.7)} ${f(nTip-6)} C${f(cx+nw2*0.95)} ${f(nTip-1)} ${f(cx+nw2*0.8)} ${f(nTip+3)} ${f(cx+nw2*0.5)} ${f(nTip+3)}" ${ncS} opacity="0.8"/>`;
+    noseSvg+=`<path d="M${f(cx+3*sW*sd_)} ${f(nTop)} C${f(cx+5*sW*sd_)} ${f(nTop+(nTip-nTop)*0.4)} ${f(cx+nw2*0.55*sd_)} ${f(nTip-8)} ${f(cx+nw2*0.5*sd_)} ${f(nTip)} C${f(cx+nw2*0.3*sd_)} ${f(nTip+4)} ${f(cx)} ${f(nTip+5)} ${f(cx-nw2*0.35*sd_)} ${f(nTip+1)}" ${ncS}/>`;
+    noseSvg+=`<path d="M${f(cx-nw2*0.7*sd_)} ${f(nTip-6)} C${f(cx-nw2*0.95*sd_)} ${f(nTip-1)} ${f(cx-nw2*0.8*sd_)} ${f(nTip+3)} ${f(cx-nw2*0.5*sd_)} ${f(nTip+3)}" ${ncS} opacity="0.8"/>`;
   }else if(P.noseType===1){
     noseSvg+=`<path d="M${f(cx-nw2*0.6)} ${f(nTip-4)} C${f(cx-nw2*0.5)} ${f(nTip+5)} ${f(cx+nw2*0.5)} ${f(nTip+5)} ${f(cx+nw2*0.6)} ${f(nTip-4)}" ${ncS}/>`;
-    noseSvg+=`<path d="M${f(cx-2*sW)} ${f(nTop+(nTip-nTop)*0.5)} C${f(cx-4*sW)} ${f(nTip-14)} ${f(cx-nw2*0.5)} ${f(nTip-10)} ${f(cx-nw2*0.55)} ${f(nTip-5)}" ${ncS} opacity="0.7"/>`;
+    noseSvg+=`<path d="M${f(cx+2*sW*sd_)} ${f(nTop+(nTip-nTop)*0.5)} C${f(cx+4*sW*sd_)} ${f(nTip-14)} ${f(cx+nw2*0.5*sd_)} ${f(nTip-10)} ${f(cx+nw2*0.55*sd_)} ${f(nTip-5)}" ${ncS} opacity="0.7"/>`;
   }else{
-    noseSvg+=`<path d="M${f(cx-3*sW)} ${f(nTop)} C${f(cx-14*sW)} ${f(nTop+(nTip-nTop)*0.45)} ${f(cx-nw2*0.9)} ${f(nTip-14)} ${f(cx-nw2*0.6)} ${f(nTip)} C${f(cx-nw2*0.3)} ${f(nTip+6)} ${f(cx+nw2*0.1)} ${f(nTip+6)} ${f(cx+nw2*0.4)} ${f(nTip+2)}" ${ncS}/>`;
-    noseSvg+=`<path d="M${f(cx+nw2*0.75)} ${f(nTip-8)} C${f(cx+nw2)} ${f(nTip-2)} ${f(cx+nw2*0.85)} ${f(nTip+3)} ${f(cx+nw2*0.5)} ${f(nTip+4)}" ${ncS} opacity="0.8"/>`;
+    noseSvg+=`<path d="M${f(cx+3*sW*sd_)} ${f(nTop)} C${f(cx+14*sW*sd_)} ${f(nTop+(nTip-nTop)*0.45)} ${f(cx+nw2*0.9*sd_)} ${f(nTip-14)} ${f(cx+nw2*0.6*sd_)} ${f(nTip)} C${f(cx+nw2*0.3*sd_)} ${f(nTip+6)} ${f(cx-nw2*0.1*sd_)} ${f(nTip+6)} ${f(cx-nw2*0.4*sd_)} ${f(nTip+2)}" ${ncS}/>`;
+    noseSvg+=`<path d="M${f(cx-nw2*0.75*sd_)} ${f(nTip-8)} C${f(cx-nw2*sd_)} ${f(nTip-2)} ${f(cx-nw2*0.85*sd_)} ${f(nTip+3)} ${f(cx-nw2*0.5*sd_)} ${f(nTip+4)}" ${ncS} opacity="0.8"/>`;
   }
-  noseSvg+=`<path d="M${f(cx-6*sW)} ${f(nTop)} L${f(cx-4*sW)} ${f(nTip-12)}" stroke="${skinSh}" stroke-width="5" opacity="0.18" stroke-linecap="round" filter="url(#soft)"/>`;
+  noseSvg+=`<path d="M${f(cx+6*sW*sd_)} ${f(nTop)} L${f(cx+4*sW*sd_)} ${f(nTip-12)}" stroke="${skinSh}" stroke-width="5" opacity="0.18" stroke-linecap="round" ${FLT}/>`;
+  H.push({id:'noseTip',cat:'nose',side:0,x:cx+nw2*0.6,y:nTip,maps:[{k:'noseL',axis:'y',scale:26,sign:1},{k:'noseW',axis:'x',scale:10,sign:1}]});
+  H.push({id:'noseB',cat:'nose',side:0,x:cx,y:nTop+8,maps:[{k:'noseH',axis:'y',scale:16,sign:1}]});
 
-  /* ---- mouth ---- */
+  /* mouth */
   const mt=P.mouthType;
-  const mY=nTip+lerp(22,30,50)*sL+Math.max(0,(L-150))*0.15;
+  const mY=nTip+26*sL+Math.max(0,(L-150))*0.15+lerp(-10,10,P.mouthH)*sL;
   const mw=lerp(13,30,P.mouthW)*sW;
   const mth=lerp(1.5,9,P.mouthThick)*(mt===3?1.6:1)*sL;
   const cornerDefault=[-3,6,-1,1][mt];
-  const cY=-(lerp(-6,6,P.mouthCorner)+cornerDefault)*sL; // negative = corners up
+  const cY=-(lerp(-6,6,P.mouthCorner)+cornerDefault)*sL;
   let mouthSvg='';
   const cupid=mt===3?3:1.5;
   const upper=`M${f(cx-mw)} ${f(mY+cY)} C${f(cx-mw*0.5)} ${f(mY-mth*0.6-cupid)} ${f(cx-mw*0.15)} ${f(mY-mth*0.8-cupid)} ${f(cx)} ${f(mY-mth*0.3)} C${f(cx+mw*0.15)} ${f(mY-mth*0.8-cupid)} ${f(cx+mw*0.5)} ${f(mY-mth*0.6-cupid)} ${f(cx+mw)} ${f(mY+cY)}`;
   const lower=`M${f(cx-mw)} ${f(mY+cY)} C${f(cx-mw*0.5)} ${f(mY+mth*1.3)} ${f(cx+mw*0.5)} ${f(mY+mth*1.3)} ${f(cx+mw)} ${f(mY+cY)}`;
-  mouthSvg+=`<path d="${upper} ${lower.replace('M','L')}" fill="${mt===2?lipLt:lip}" opacity="${mt===0?0.55:0.9}"/>`;
+  const lipOp=P.lipColor>0?1:(mt===0?0.55:0.9);
+  mouthSvg+=`<path d="${upper} ${lower.replace('M','L')}" fill="${mt===2&&P.lipColor===0?lipLt:lip}" opacity="${f(lipOp)}"/>`;
   mouthSvg+=`<path d="${lower}" fill="${lipLt}" opacity="0.9"/>`;
-  // lip line
   mouthSvg+=`<path d="M${f(cx-mw)} ${f(mY+cY)} Q${f(cx-mw*0.4)} ${f(mY+(mt===2?1.5:0.5))} ${f(cx)} ${f(mY+(mt===2?2:0.3))} Q${f(cx+mw*0.4)} ${f(mY+(mt===2?1.5:0.5))} ${f(cx+mw)} ${f(mY+cY)}" fill="none" stroke="${shade(lip,0.5)}" stroke-width="${mt===2?2.6:2}" stroke-linecap="round"/>`;
   if(mt===1){mouthSvg+=`<path d="M${f(cx-mw-4)} ${f(mY+cY-6)} q-3 6 1 11 M${f(cx+mw+4)} ${f(mY+cY-6)} q3 6 -1 11" fill="none" stroke="${skinSh}" stroke-width="1.6" stroke-linecap="round"/>`;}
   if(mt===3){mouthSvg+=`<path d="M${f(cx-mw*0.4)} ${f(mY+mth*0.7)} Q${f(cx)} ${f(mY+mth*1.0)} ${f(cx+mw*0.4)} ${f(mY+mth*0.7)}" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>`;}
+  if(P.dimple===1){mouthSvg+=`<circle cx="${f(cx-mw-9)}" cy="${f(mY+cY+2)}" r="2.4" fill="#b8302b" opacity="0.85"/><circle cx="${f(cx+mw+9)}" cy="${f(mY+cY+2)}" r="2.4" fill="#b8302b" opacity="0.85"/>`;}
+  if(P.faling>0){const fo=lerp(0,0.75,P.faling);mouthSvg+=`<path d="M${f(cx-nw2*0.9)} ${f(nTip+2)} C${f(cx-nw2*1.6)} ${f(nTip+14)} ${f(cx-mw*1.25)} ${f(mY-6)} ${f(cx-mw*1.2)} ${f(mY+8)} M${f(cx+nw2*0.9)} ${f(nTip+2)} C${f(cx+nw2*1.6)} ${f(nTip+14)} ${f(cx+mw*1.25)} ${f(mY-6)} ${f(cx+mw*1.2)} ${f(mY+8)}" fill="none" stroke="${skinSh}" stroke-width="1.8" opacity="${f(fo)}" stroke-linecap="round"/>`;}
+  H.push({id:'mouthC',cat:'mouth',side:0,x:cx,y:mY,maps:[{k:'mouthH',axis:'y',scale:20,sign:1}]});
+  H.push({id:'mouthR',cat:'mouth',side:0,x:cx+mw,y:mY+cY,maps:[{k:'mouthW',axis:'x',scale:17,sign:1},{k:'mouthCorner',axis:'y',scale:12,sign:-1}]});
+  H.push({id:'mouthB',cat:'mouth',side:0,x:cx,y:mY+mth*1.0,maps:[{k:'mouthThick',axis:'y',scale:8,sign:1}]});
 
-  /* ---- beard ---- */
+  /* mole */
+  let moleSvg='';
+  if(P.mole===1){moleSvg=`<circle cx="${f(eyeInfo[1].ex+eyeInfo[1].ew*0.3)}" cy="${f(eyeInfo[1].ey+eh*2.4)}" r="2.2" fill="#3b2a22"/>`;}
+  else if(P.mole===2){moleSvg=`<circle cx="${f(cx-mw-10)}" cy="${f(mY-8)}" r="2.2" fill="#3b2a22"/>`;}
+  else if(P.mole===3){moleSvg=`<circle cx="${cx}" cy="${f(ey-eh*2.6)}" r="2.2" fill="#3b2a22"/>`;}
+
+  /* beard */
   let beardSvg='';
   const bc=luma(hair)>0.6?'#9aa5b3':shade(hair,0.15);
   if(P.beard===1){beardSvg=`<path d="M${f(cx-mw*0.6)} ${f(cy+L*0.86)} C${f(cx-mw*0.5)} ${f(cy+L*1.02)} ${f(cx-6)} ${f(cy+L*1.18)} ${f(cx)} ${f(cy+L*1.24)} C${f(cx+6)} ${f(cy+L*1.18)} ${f(cx+mw*0.5)} ${f(cy+L*1.02)} ${f(cx+mw*0.6)} ${f(cy+L*0.86)}Z" fill="${bc}" ${inkThin}/>`;}
   else if(P.beard===2){beardSvg=`<path d="M${f(cx-3)} ${f(mY-mth-6)} C${f(cx-mw*0.6)} ${f(mY-mth-10)} ${f(cx-mw*1.1)} ${f(mY-2)} ${f(cx-mw*1.3)} ${f(mY+10)} M${f(cx+3)} ${f(mY-mth-6)} C${f(cx+mw*0.6)} ${f(mY-mth-10)} ${f(cx+mw*1.1)} ${f(mY-2)} ${f(cx+mw*1.3)} ${f(mY+10)}" fill="none" stroke="${bc}" stroke-width="4.5" stroke-linecap="round"/>`;}
-  else if(P.beard===3){
-    const pts=[[cx-W*0.95,cy+L*0.05],[cx-W*jawF*1.02,cy+L*0.64],[cx-W*jawF*chinF*1.1,cy+L*1.05],[cx,cy+L*1.14],[cx+W*jawF*chinF*1.1,cy+L*1.05],[cx+W*jawF*1.02,cy+L*0.64],[cx+W*0.95,cy+L*0.05],[cx+W*0.7,cy+L*0.35],[cx+mw*1.25,cy+L*0.66],[cx,cy+L*0.75],[cx-mw*1.25,cy+L*0.66],[cx-W*0.7,cy+L*0.35]];
-    beardSvg=`<path d="${smoothClosed(pts)}" fill="${bc}" ${inkThin} opacity="0.95"/>`;
-  }
+  else if(P.beard===3){beardSvg=`<path d="${smoothClosed([[cx-W*0.95,cy+L*0.05],[cx-W*jawF*1.02,cy+L*0.64],[cx-W*jawF*chinF*1.1,cy+L*1.05],[cx,cy+L*1.14],[cx+W*jawF*chinF*1.1,cy+L*1.05],[cx+W*jawF*1.02,cy+L*0.64],[cx+W*0.95,cy+L*0.05],[cx+W*0.7,cy+L*0.35],[cx+mw*1.25,cy+L*0.66],[cx,cy+L*0.75],[cx-mw*1.25,cy+L*0.66],[cx-W*0.7,cy+L*0.35]])}" fill="${bc}" ${inkThin} opacity="0.95"/>`;}
 
-  /* ---- decorations ---- */
+  /* marks */
   let decoSvg='';
   const fhY=cy-L*0.5;
   if(P.forehead===1){decoSvg+=`<g transform="translate(${cx} ${f(fhY)})"><path d="M0 -13 L5 -4 L14 -2 L6 4 L8 13 L0 8 L-8 13 L-6 4 L-14 -2 L-5 -4Z" fill="#bfefff" stroke="#5fb8d8" stroke-width="1.2"/><path d="M0 -6 L2 0 L0 6 L-2 0Z" fill="#ffffff"/></g>`;}
   else if(P.forehead===2){decoSvg+=`<circle cx="${cx}" cy="${f(fhY)}" r="5" fill="#b8302b"/>`;}
   else if(P.forehead===3){decoSvg+=`<g transform="translate(${cx} ${f(fhY)})"><path d="M0 -11 L9 0 L0 11 L-9 0Z" fill="none" stroke="#c9a24a" stroke-width="2.2"/><circle r="3" fill="#c9a24a"/></g>`;}
   if(P.daoMark===1){decoSvg+=`<path d="M${f(cx-W*0.78)} ${f(cy+L*0.12)} q6 10 0 22 M${f(cx-W*0.68)} ${f(cy+L*0.16)} q5 8 0 17 M${f(cx+W*0.78)} ${f(cy+L*0.12)} q-6 10 0 22 M${f(cx+W*0.68)} ${f(cy+L*0.16)} q-5 8 0 17" fill="none" stroke="#5b7fc2" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`;}
-  else if(P.daoMark===2){decoSvg+=`<path d="M${cx} ${f(by-14)} L${cx} ${f(by+12)} M${f(cx-5)} ${f(by-6)} L${f(cx+5)} ${f(by-6)}" fill="none" stroke="#5b7fc2" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`;}
-  if(P.scar===1){const ex=cx-exo;decoSvg+=`<path d="M${f(ex-ew*0.3)} ${f(ey-eh*2.4)} L${f(ex+ew*0.5)} ${f(ey+eh*2.6)}" stroke="#b56a6a" stroke-width="2.4" stroke-linecap="round"/><path d="M${f(ex-4)} ${f(ey-eh*1.9)} l8 2 M${f(ex+4)} ${f(ey+eh*1.9)} l8 2" stroke="#b56a6a" stroke-width="1.6" stroke-linecap="round"/>`;}
+  else if(P.daoMark===2){const by=ey-eh-lerp(12,32,P.browH)*sL;decoSvg+=`<path d="M${cx} ${f(by-14)} L${cx} ${f(by+12)} M${f(cx-5)} ${f(by-6)} L${f(cx+5)} ${f(by-6)}" fill="none" stroke="#5b7fc2" stroke-width="2" stroke-linecap="round" opacity="0.85"/>`;}
+  if(P.scar===1){const g=eyeInfo[-1];decoSvg+=`<path d="M${f(g.ex-g.ew*0.3)} ${f(g.ey-g.eh*2.4)} L${f(g.ex+g.ew*0.5)} ${f(g.ey+g.eh*2.6)}" stroke="#b56a6a" stroke-width="2.4" stroke-linecap="round"/><path d="M${f(g.ex-4)} ${f(g.ey-g.eh*1.9)} l8 2 M${f(g.ex+4)} ${f(g.ey+g.eh*1.9)} l8 2" stroke="#b56a6a" stroke-width="1.6" stroke-linecap="round"/>`;}
   else if(P.scar===2){decoSvg+=`<path d="M${f(cx+W*0.55)} ${f(cy+L*0.25)} L${f(cx+W*0.8)} ${f(cy+L*0.6)}" stroke="#b56a6a" stroke-width="2.4" stroke-linecap="round"/>`;}
 
-  /* ---- front hair ---- */
+  /* front hair */
   let frontHair='';
   if(!bald){
-    const hl=cy-L*0.62; // hairline
-    const cap=`M${f(cx-W*0.98)} ${f(cy-L*0.42)} C${f(cx-W*0.85)} ${f(yh-12)} ${f(cx+W*0.85)} ${f(yh-12)} ${f(cx+W*0.98)} ${f(cy-L*0.42)} C${f(cx+W*0.7)} ${f(hl)} ${f(cx-W*0.7)} ${f(hl)} ${f(cx-W*0.98)} ${f(cy-L*0.42)}Z`;
-    frontHair+=`<path d="${cap}" fill="${hair}" ${inkAttr}/>`;
+    const hl=cy-L*0.62;
+    frontHair+=`<path d="M${f(cx-W*0.98)} ${f(cy-L*0.42)} C${f(cx-W*0.85)} ${f(yh-12)} ${f(cx+W*0.85)} ${f(yh-12)} ${f(cx+W*0.98)} ${f(cy-L*0.42)} C${f(cx+W*0.7)} ${f(hl)} ${f(cx-W*0.7)} ${f(hl)} ${f(cx-W*0.98)} ${f(cy-L*0.42)}Z" fill="${hair}" ${inkAttr}/>`;
     const b=P.bangs;
     if(b===0){
-      // parted locks
-      const lockL=`M${f(cx-3)} ${f(hl-6)} C${f(cx-W*0.45)} ${f(hl+4)} ${f(cx-W*0.82)} ${f(cy-L*0.5)} ${f(cx-W*0.92)} ${f(cy-L*0.05)} L${f(cx-W*0.72)} ${f(cy-L*0.16)} C${f(cx-W*0.6)} ${f(cy-L*0.5)} ${f(cx-W*0.3)} ${f(hl+30)} ${f(cx-2)} ${f(hl+18)}Z`;
-      const lockR=`M${f(cx+3)} ${f(hl-6)} C${f(cx+W*0.45)} ${f(hl+4)} ${f(cx+W*0.82)} ${f(cy-L*0.5)} ${f(cx+W*0.92)} ${f(cy-L*0.05)} L${f(cx+W*0.72)} ${f(cy-L*0.16)} C${f(cx+W*0.6)} ${f(cy-L*0.5)} ${f(cx+W*0.3)} ${f(hl+30)} ${f(cx+2)} ${f(hl+18)}Z`;
-      frontHair+=`<path d="${lockL}" fill="${hair}" ${inkThin}/><path d="${lockR}" fill="${hair}" ${inkThin}/>`;
-      // small centre strand
+      frontHair+=`<path d="M${f(cx-3)} ${f(hl-6)} C${f(cx-W*0.45)} ${f(hl+4)} ${f(cx-W*0.82)} ${f(cy-L*0.5)} ${f(cx-W*0.92)} ${f(cy-L*0.05)} L${f(cx-W*0.72)} ${f(cy-L*0.16)} C${f(cx-W*0.6)} ${f(cy-L*0.5)} ${f(cx-W*0.3)} ${f(hl+30)} ${f(cx-2)} ${f(hl+18)}Z" fill="${hair}" ${inkThin}/><path d="M${f(cx+3)} ${f(hl-6)} C${f(cx+W*0.45)} ${f(hl+4)} ${f(cx+W*0.82)} ${f(cy-L*0.5)} ${f(cx+W*0.92)} ${f(cy-L*0.05)} L${f(cx+W*0.72)} ${f(cy-L*0.16)} C${f(cx+W*0.6)} ${f(cy-L*0.5)} ${f(cx+W*0.3)} ${f(hl+30)} ${f(cx+2)} ${f(hl+18)}Z" fill="${hair}" ${inkThin}/>`;
       frontHair+=`<path d="M${f(cx-1)} ${f(hl-4)} C${f(cx-6)} ${f(hl+16)} ${f(cx-4)} ${f(hl+30)} ${f(cx+2)} ${f(hl+44)} C${f(cx+3)} ${f(hl+28)} ${f(cx+6)} ${f(hl+14)} ${f(cx+3)} ${f(hl-4)}Z" fill="${hair}" ${inkThin}/>`;
     }else if(b===1){
-      const sweep=`M${f(cx+W*0.6)} ${f(hl-4)} C${f(cx+W*0.1)} ${f(hl+4)} ${f(cx-W*0.5)} ${f(cy-L*0.45)} ${f(cx-W*0.9)} ${f(cy-L*0.02)} L${f(cx-W*0.98)} ${f(cy-L*0.42)} C${f(cx-W*0.5)} ${f(cy-L*0.72)} ${f(cx+W*0.1)} ${f(cy-L*0.78)} ${f(cx+W*0.6)} ${f(hl-4)}Z`;
-      frontHair+=`<path d="${sweep}" fill="${hair}" ${inkThin}/>`;
-      frontHair+=`<path d="M${f(cx+W*0.3)} ${f(hl)} C${f(cx-W*0.1)} ${f(hl+10)} ${f(cx-W*0.45)} ${f(cy-L*0.4)} ${f(cx-W*0.7)} ${f(cy-L*0.15)}" fill="none" stroke="${hairDk}" stroke-width="2"/>`;
+      frontHair+=`<path d="M${f(cx+W*0.6)} ${f(hl-4)} C${f(cx+W*0.1)} ${f(hl+4)} ${f(cx-W*0.5)} ${f(cy-L*0.45)} ${f(cx-W*0.9)} ${f(cy-L*0.02)} L${f(cx-W*0.98)} ${f(cy-L*0.42)} C${f(cx-W*0.5)} ${f(cy-L*0.72)} ${f(cx+W*0.1)} ${f(cy-L*0.78)} ${f(cx+W*0.6)} ${f(hl-4)}Z" fill="${hair}" ${inkThin}/><path d="M${f(cx+W*0.3)} ${f(hl)} C${f(cx-W*0.1)} ${f(hl+10)} ${f(cx-W*0.45)} ${f(cy-L*0.4)} ${f(cx-W*0.7)} ${f(cy-L*0.15)}" fill="none" stroke="${hairDk}" stroke-width="2"/>`;
     }else if(b===2){
-      const top=hl-8, bot=ey-eh-6*sL;
-      const pts=[];const n=6;
+      const top=hl-8, bot=ey-eh-6*sL;const pts=[];const n=6;
       for(let i=0;i<=n;i++){const x=cx-W*0.9+(W*1.8)*i/n;pts.push(`${f(x)} ${f(bot+(i%2?0:-8))}`);}
       frontHair+=`<path d="M${f(cx-W*0.98)} ${f(cy-L*0.42)} C${f(cx-W*0.6)} ${f(top-4)} ${f(cx+W*0.6)} ${f(top-4)} ${f(cx+W*0.98)} ${f(cy-L*0.42)} L${f(cx+W*0.9)} ${f(bot-10)} L${pts.reverse().join(' L')} L${f(cx-W*0.9)} ${f(bot-10)}Z" fill="${hair}" ${inkThin}/>`;
     }else{
       frontHair+=`<path d="M${f(cx-W*0.6)} ${f(hl+2)} C${f(cx-W*0.3)} ${f(hl-4)} ${f(cx+W*0.3)} ${f(hl-4)} ${f(cx+W*0.6)} ${f(hl+2)}" fill="none" stroke="${hairDk}" stroke-width="2" opacity="0.7"/>`;
     }
-    // side strands in front of shoulders (long styles)
     if(hs===0||hs===2||hs===5){
-      const sl=`M${f(cx-W*0.98)} ${f(cy-L*0.45)} C${f(cx-W*1.14)} ${f(cy)} ${f(cx-W*1.06)} ${f(cy+L*0.6)} ${f(cx-W*0.96)} ${f(cy+L*1.4)} L${f(cx-W*0.84)} ${f(cy+L*1.32)} C${f(cx-W*0.9)} ${f(cy+L*0.6)} ${f(cx-W*0.97)} ${f(cy)} ${f(cx-W*0.9)} ${f(cy-L*0.35)}Z`;
-      const sr=`M${f(cx+W*0.98)} ${f(cy-L*0.45)} C${f(cx+W*1.14)} ${f(cy)} ${f(cx+W*1.08)} ${f(cy+L*0.6)} ${f(cx+W*1.0)} ${f(cy+L*1.4)} L${f(cx+W*0.86)} ${f(cy+L*1.32)} C${f(cx+W*0.92)} ${f(cy+L*0.6)} ${f(cx+W*0.97)} ${f(cy)} ${f(cx+W*0.9)} ${f(cy-L*0.35)}Z`;
-      frontHair+=`<path d="${sl}" fill="${hair}" ${inkThin}/><path d="${sr}" fill="${hair}" ${inkThin}/>`;
+      frontHair+=`<path d="M${f(cx-W*0.98)} ${f(cy-L*0.45)} C${f(cx-W*1.14)} ${f(cy)} ${f(cx-W*1.06)} ${f(cy+L*0.6)} ${f(cx-W*0.96)} ${f(cy+L*1.4)} L${f(cx-W*0.84)} ${f(cy+L*1.32)} C${f(cx-W*0.9)} ${f(cy+L*0.6)} ${f(cx-W*0.97)} ${f(cy)} ${f(cx-W*0.9)} ${f(cy-L*0.35)}Z" fill="${hair}" ${inkThin}/><path d="M${f(cx+W*0.98)} ${f(cy-L*0.45)} C${f(cx+W*1.14)} ${f(cy)} ${f(cx+W*1.08)} ${f(cy+L*0.6)} ${f(cx+W*1.0)} ${f(cy+L*1.4)} L${f(cx+W*0.86)} ${f(cy+L*1.32)} C${f(cx+W*0.92)} ${f(cy+L*0.6)} ${f(cx+W*0.97)} ${f(cy)} ${f(cx+W*0.9)} ${f(cy-L*0.35)}Z" fill="${hair}" ${inkThin}/>`;
       frontHair+=`<path d="M${f(cx-W*1.02)} ${f(cy+L*0.1)} C${f(cx-W*1.04)} ${f(cy+L*0.6)} ${f(cx-W*0.98)} ${f(cy+L*1.0)} ${f(cx-W*0.9)} ${f(cy+L*1.3)} M${f(cx+W*1.04)} ${f(cy+L*0.1)} C${f(cx+W*1.06)} ${f(cy+L*0.6)} ${f(cx+W*1.0)} ${f(cy+L*1.0)} ${f(cx+W*0.92)} ${f(cy+L*1.3)}" fill="none" stroke="${hairDk}" stroke-width="1.6"/>`;
     }
     if(hs===1||hs===3){
       frontHair+=`<path d="M${f(cx-W*0.98)} ${f(cy-L*0.45)} C${f(cx-W*1.1)} ${f(cy-L*0.1)} ${f(cx-W*1.05)} ${f(cy+L*0.15)} ${f(cx-W*0.92)} ${f(cy+L*0.3)} L${f(cx-W*0.8)} ${f(cy+L*0.1)} C${f(cx-W*0.9)} ${f(cy-L*0.1)} ${f(cx-W*0.92)} ${f(cy-L*0.3)} ${f(cx-W*0.86)} ${f(cy-L*0.4)}Z M${f(cx+W*0.98)} ${f(cy-L*0.45)} C${f(cx+W*1.1)} ${f(cy-L*0.1)} ${f(cx+W*1.05)} ${f(cy+L*0.15)} ${f(cx+W*0.92)} ${f(cy+L*0.3)} L${f(cx+W*0.8)} ${f(cy+L*0.1)} C${f(cx+W*0.9)} ${f(cy-L*0.1)} ${f(cx+W*0.92)} ${f(cy-L*0.3)} ${f(cx+W*0.86)} ${f(cy-L*0.4)}Z" fill="${hair}" ${inkThin}/>`;
     }
-    // highlight arc on cap
     frontHair+=`<path d="M${f(cx-W*0.5)} ${f(cy-L*0.78)} C${f(cx-W*0.2)} ${f(cy-L*0.9)} ${f(cx+W*0.25)} ${f(cy-L*0.9)} ${f(cx+W*0.55)} ${f(cy-L*0.76)}" fill="none" stroke="${hairLt}" stroke-width="2.2" opacity="0.9"/>`;
-    // topknot
     if(hs===0||hs===5||hs===1){
       const kr=hs===5?W*0.17:W*0.22, ky=yh-(hs===1?6:18);
       if(hs!==1){
-        frontHair+=`<path d="M${f(cx-kr*0.7)} ${f(ky+kr*0.6)} C${f(cx-kr*0.4)} ${f(ky+kr*1.2)} ${f(cx+kr*0.4)} ${f(ky+kr*1.2)} ${f(cx+kr*0.7)} ${f(ky+kr*0.6)}Z" fill="${hair}" ${inkThin}/>`;
-        frontHair+=`<ellipse cx="${cx}" cy="${f(ky)}" rx="${f(kr)}" ry="${f(kr*0.72)}" fill="${hair}" ${inkAttr}/>`;
-        frontHair+=`<path d="M${f(cx-kr*0.5)} ${f(ky-kr*0.2)} C${f(cx-kr*0.1)} ${f(ky-kr*0.5)} ${f(cx+kr*0.3)} ${f(ky-kr*0.45)} ${f(cx+kr*0.55)} ${f(ky-kr*0.1)}" fill="none" stroke="${hairLt}" stroke-width="1.8"/>`;
+        frontHair+=`<path d="M${f(cx-kr*0.7)} ${f(ky+kr*0.6)} C${f(cx-kr*0.4)} ${f(ky+kr*1.2)} ${f(cx+kr*0.4)} ${f(ky+kr*1.2)} ${f(cx+kr*0.7)} ${f(ky+kr*0.6)}Z" fill="${hair}" ${inkThin}/><ellipse cx="${cx}" cy="${f(ky)}" rx="${f(kr)}" ry="${f(kr*0.72)}" fill="${hair}" ${inkAttr}/><path d="M${f(cx-kr*0.5)} ${f(ky-kr*0.2)} C${f(cx-kr*0.1)} ${f(ky-kr*0.5)} ${f(cx+kr*0.3)} ${f(ky-kr*0.45)} ${f(cx+kr*0.55)} ${f(ky-kr*0.1)}" fill="none" stroke="${hairLt}" stroke-width="1.8"/>`;
       }else{
         frontHair+=`<path d="M${f(cx-W*0.16)} ${f(yh-2)} L${f(cx+W*0.22)} ${f(yh-8)} L${f(cx+W*0.24)} ${f(yh+4)} L${f(cx-W*0.14)} ${f(yh+8)}Z" fill="${robe[2]}" ${inkThin}/>`;
       }
       if(P.hairpin>0&&hs!==1){
         const pc=P.hairpin===1?'#c7d3e0':'#7fc9a4', pc2=P.hairpin===1?'#7f8fa3':'#3f8a63';
-        frontHair+=`<path d="M${f(cx-W*0.55)} ${f(ky+2)} L${f(cx+W*0.6)} ${f(ky-10)}" stroke="${pc2}" stroke-width="5" stroke-linecap="round"/><path d="M${f(cx-W*0.55)} ${f(ky+2)} L${f(cx+W*0.6)} ${f(ky-10)}" stroke="${pc}" stroke-width="3" stroke-linecap="round"/>`;
-        frontHair+=`<path d="M${f(cx+W*0.6)} ${f(ky-10)} l-6 -10 l10 4z" fill="${pc}" stroke="${pc2}" stroke-width="1"/>`;
+        frontHair+=`<path d="M${f(cx-W*0.55)} ${f(ky+2)} L${f(cx+W*0.6)} ${f(ky-10)}" stroke="${pc2}" stroke-width="5" stroke-linecap="round"/><path d="M${f(cx-W*0.55)} ${f(ky+2)} L${f(cx+W*0.6)} ${f(ky-10)}" stroke="${pc}" stroke-width="3" stroke-linecap="round"/><path d="M${f(cx+W*0.6)} ${f(ky-10)} l-6 -10 l10 4z" fill="${pc}" stroke="${pc2}" stroke-width="1"/>`;
       }
     }
   }else{
-    // bald: scalp sheen
-    frontHair+=`<ellipse cx="${f(cx-W*0.25)}" cy="${f(cy-L*0.7)}" rx="${f(W*0.32)}" ry="${f(L*0.12)}" fill="#ffffff" opacity="0.35" filter="url(#soft)"/>`;
+    frontHair+=`<ellipse cx="${f(cx-W*0.25*(lightDir||1))}" cy="${f(cy-L*0.7)}" rx="${f(W*0.32)}" ry="${f(L*0.12)}" fill="#ffffff" opacity="0.35" ${FLT}/>`;
   }
 
-  /* ---- assemble face features ---- */
-  a(eyeL.svg); a(eyeR.svg); a(browsSvg); a(noseSvg); a(mouthSvg); a(beardSvg); a(decoSvg); a(frontHair);
+  a(eyeL.svg); a(eyeR.svg); a(browsSvg); a(noseSvg); a(mouthSvg); a(moleSvg); a(beardSvg); a(decoSvg); a(frontHair);
+  a(`<path d="M${f(cx-W*2.1)} ${f(cy+L*1.9)} C${f(cx-W*1.6)} ${f(cy+L*1.5)} ${f(cx-W*1.9)} ${f(cy+L*1.1)} ${f(cx-W*1.5)} ${f(cy+L*0.7)}" fill="none" stroke="${aura}" stroke-width="6" opacity="0.35" stroke-linecap="round" ${FLT}/><path d="M${f(cx+W*2.1)} ${f(cy+L*1.9)} C${f(cx+W*1.6)} ${f(cy+L*1.5)} ${f(cx+W*1.9)} ${f(cy+L*1.1)} ${f(cx+W*1.5)} ${f(cy+L*0.7)}" fill="none" stroke="${aura}" stroke-width="6" opacity="0.35" stroke-linecap="round" ${FLT}/>`);
+  if(!thumb){a(`<rect x="536" y="700" width="46" height="46" fill="#b8302b" opacity="0.85" rx="2"/><text x="559" y="720" font-size="16" fill="#ffffff" text-anchor="middle" font-family="Noto Serif TC,serif" font-weight="700">問道</text><text x="559" y="740" font-size="16" fill="#ffffff" text-anchor="middle" font-family="Noto Serif TC,serif" font-weight="700">棋局</text>`);}
 
-  // aura wisps in front
-  a(`<path d="M${f(cx-W*2.1)} ${f(cy+L*1.9)} C${f(cx-W*1.6)} ${f(cy+L*1.5)} ${f(cx-W*1.9)} ${f(cy+L*1.1)} ${f(cx-W*1.5)} ${f(cy+L*0.7)}" fill="none" stroke="${aura}" stroke-width="6" opacity="0.35" stroke-linecap="round" filter="url(#soft)"/>`);
-  a(`<path d="M${f(cx+W*2.1)} ${f(cy+L*1.9)} C${f(cx+W*1.6)} ${f(cy+L*1.5)} ${f(cx+W*1.9)} ${f(cy+L*1.1)} ${f(cx+W*1.5)} ${f(cy+L*0.7)}" fill="none" stroke="${aura}" stroke-width="6" opacity="0.35" stroke-linecap="round" filter="url(#soft)"/>`);
-  // seal
-  a(`<rect x="536" y="700" width="46" height="46" fill="#b8302b" opacity="0.85" rx="2"/><text x="559" y="720" font-size="16" fill="#ffffff" text-anchor="middle" font-family="Noto Serif TC,serif" font-weight="700">問道</text><text x="559" y="740" font-size="16" fill="#ffffff" text-anchor="middle" font-family="Noto Serif TC,serif" font-weight="700">棋局</text>`);
+  if(opts.handles){
+    let hg='<g id="handles">';
+    H.filter(h=>h.cat===opts.handles).forEach(h=>{
+      const dim=!P.sym&&h.side!==0&&h.side!==opts.side;
+      hg+=`<g class="handle" data-id="${h.id}" opacity="${dim?0.4:1}"><circle cx="${f(h.x)}" cy="${f(h.y)}" r="16" fill="transparent"/><circle cx="${f(h.x)}" cy="${f(h.y)}" r="7" fill="#c9a24a" stroke="#ffffff" stroke-width="2"/><circle cx="${f(h.x)}" cy="${f(h.y)}" r="11" fill="none" stroke="#c9a24a" stroke-width="1" opacity="0.7"/></g>`;
+    });
+    hg+='</g>';a(hg);
+  }
 
-  const svg=$('#stage');
-  svg.innerHTML=out.join('');
-  $('#eyeClipL').setAttribute('d',eyeL.clip);
-  $('#eyeClipR').setAttribute('d',eyeR.clip);
-  $('#codeOut').value=encode();
-  const pr=PRESETS[currentPreset];
-  $('#metaName').textContent=pr?pr.name:'自訂';
-  $('#metaInfo').textContent=`${ROBES[P.robe][0]} · ${AURAS[P.aura][0]}靈根`;
+  svgEl.innerHTML=out.join('');
+  svgEl.querySelector('.eyeClipL').setAttribute('d',eyeL.clip);
+  svgEl.querySelector('.eyeClipR').setAttribute('d',eyeR.clip);
+  svgEl.querySelector('.faceClip').setAttribute('d',faceD);
+  if(thumb){svgEl.setAttribute('viewBox',`${f(cx-W*1.9)} ${f(y0-40)} ${f(W*3.8)} ${f(L*2.5)}`);}
+  else if(opts.cam==='face'){svgEl.setAttribute('viewBox',`${f(cx-W*1.55)} ${f(y0-36)} ${f(W*3.1)} ${f(L*2.4)}`);}
+  else svgEl.setAttribute('viewBox','0 0 600 760');
+  return H;
 }
 
-/* ---------- code encode / decode ---------- */
-function encode(){
-  const v=KEYS.map(k=>COLOR_KEYS.includes(k)?String(P[k]).replace('#',''):String(P[k]));
-  try{return 'WD1.'+btoa(v.join(','));}catch(e){return '';}
-}
+/* ---------- encode / decode ---------- */
+function encode(o){o=o||P;const v=KEYS.map(k=>COLOR_KEYS.includes(k)?String(o[k]).replace('#',''):String(o[k]));try{return 'WD2.'+btoa(v.join(','));}catch(e){return '';}}
 function decode(str){
   str=(str||'').trim();
-  if(!str.startsWith('WD1.'))return null;
-  let raw;try{raw=atob(str.slice(4));}catch(e){return null;}
-  const parts=raw.split(',');if(parts.length!==KEYS.length)return null;
-  const o={};
-  for(let i=0;i<KEYS.length;i++){
-    const k=KEYS[i],v=parts[i];
+  let keys=KEYS, v1=false;
+  if(str.startsWith('WD2.'))str=str.slice(4);else if(str.startsWith('WD1.')){str=str.slice(4);keys=V1_KEYS;v1=true;}else return null;
+  let raw;try{raw=atob(str);}catch(e){return null;}
+  const parts=raw.split(',');if(parts.length!==keys.length)return null;
+  const o=Object.assign({},DEFAULTS);
+  for(let i=0;i<keys.length;i++){
+    const k=keys[i],v=parts[i];const base=k.replace(/_[LR]$/,'');
     if(COLOR_KEYS.includes(k)){if(!/^[0-9a-fA-F]{6}$/.test(v))return null;o[k]='#'+v.toLowerCase();}
-    else{const n=parseInt(v,10);if(isNaN(n))return null;const max=CHOICE_MAX[k]!==undefined?CHOICE_MAX[k]:100;o[k]=Math.max(0,Math.min(max,n));}
+    else{const n=parseInt(v,10);if(isNaN(n))return null;const max=CHOICE_MAX[base]!==undefined?CHOICE_MAX[base]:100;o[k]=clamp(n,0,max);}
   }
+  if(v1){if(o.eyeShadow>2)o.eyeShadow=0;SIDE_KEYS.forEach(k=>{o[k+'_L']=o[k];o[k+'_R']=o[k];});o.sym=1;o.light=1;}
   return o;
 }
 
+/* ---------- history ---------- */
+const hist={u:[],r:[]};let lastCommitted='';
+function commit(){const c=encode();if(c===lastCommitted)return;hist.u.push(lastCommitted);if(hist.u.length>60)hist.u.shift();hist.r.length=0;lastCommitted=c;refreshHistBtns();persist();}
+function undo(){if(!hist.u.length)return;hist.r.push(lastCommitted);const c=hist.u.pop();P=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function redo(){if(!hist.r.length)return;hist.u.push(lastCommitted);const c=hist.r.pop();P=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function refreshHistBtns(){$('#btnUndo').disabled=!hist.u.length;$('#btnRedo').disabled=!hist.r.length;}
+
 /* ---------- UI ---------- */
-const panes=$('#panes'), tabsEl=$('#tabs');
-let activeTab='face';
-function buildUI(){
-  TABS.forEach(tab=>{
-    const b=document.createElement('button');b.type='button';b.className='tab';b.role='tab';b.id='tab-'+tab.id;b.textContent=tab.name;
-    b.setAttribute('aria-selected',tab.id===activeTab?'true':'false');
-    b.addEventListener('click',()=>{activeTab=tab.id;refreshTabs();try{localStorage.setItem('wd_tab',activeTab);}catch(e){}});
-    tabsEl.appendChild(b);
-    const pane=document.createElement('div');pane.className='pane';pane.id='pane-'+tab.id;pane.hidden=tab.id!==activeTab;
-    tab.controls.forEach(c=>{
-      if(c.t==='group'){const g=document.createElement('div');g.className='group-title';g.textContent=c.n;pane.appendChild(g);return;}
-      const wrap=document.createElement('div');wrap.className='ctl';wrap.dataset.key=c.k;
-      const lab=document.createElement('div');lab.className='lab';
-      const nm=document.createElement('b');nm.textContent=c.n;lab.appendChild(nm);
-      if(c.t==='slider'){
-        const v=document.createElement('span');v.className='v';v.id='v-'+c.k;lab.appendChild(v);
-        wrap.appendChild(lab);
-        const inp=document.createElement('input');inp.type='range';inp.min=0;inp.max=100;inp.id='in-'+c.k;inp.setAttribute('aria-label',c.n);
-        inp.addEventListener('input',()=>{P[c.k]=+inp.value;v.textContent=inp.value;currentPreset=-1;render();persist();});
-        wrap.appendChild(inp);
-      }else if(c.t==='choice'){
-        wrap.appendChild(lab);
-        const ch=document.createElement('div');ch.className='choices';ch.id='ch-'+c.k;
-        c.o.forEach((name,i)=>{const bt=document.createElement('button');bt.type='button';bt.className='chip';bt.textContent=name;bt.id=`ch-${c.k}-${i}`;
-          bt.addEventListener('click',()=>{P[c.k]=i;currentPreset=-1;refreshValues();render();persist();});ch.appendChild(bt);});
-        wrap.appendChild(ch);
-      }else if(c.t==='color'){
-        wrap.appendChild(lab);
-        const row=document.createElement('div');row.className='colors';row.id='co-'+c.k;
-        c.sw.forEach((hex,i)=>{const sw=document.createElement('button');sw.type='button';sw.className='sw';sw.id=`co-${c.k}-${i}`;sw.setAttribute('aria-label',c.n+' '+hex);sw.innerHTML=`<span style="background:${hex}"></span>`;
-          sw.addEventListener('click',()=>{P[c.k]=hex;currentPreset=-1;refreshValues();render();persist();});row.appendChild(sw);});
-        const ci=document.createElement('input');ci.type='color';ci.id='in-'+c.k;ci.setAttribute('aria-label',c.n+' 自訂');
-        ci.addEventListener('input',()=>{P[c.k]=ci.value;currentPreset=-1;refreshValues();render();persist();});
-        row.appendChild(ci);wrap.appendChild(row);
-      }
-      pane.appendChild(wrap);
-    });
-    panes.appendChild(pane);
-  });
-  const pr=$('#presets');
-  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='chip';b.id='preset-'+i;b.textContent=p.name;
-    b.addEventListener('click',()=>{applyPreset(i);});pr.appendChild(b);});
+const svg=$('#svg');
+let handles=[];
+function draw(){handles=render(svg,compareBase||P,{handles:compareBase?null:activeCat,side:activeSide,cam});const pr=PRESETS[currentPreset];$('#metaName').textContent=(pr?pr.name:'自訂臉譜')+' · '+ROBES[P.robe][0]+' · '+AURAS[P.aura][0]+'靈根';}
+
+function buildRail(){
+  const rail=$('#rail');
+  CATS.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='cat';b.setAttribute('role','tab');b.id='cat-'+c.id;b.innerHTML=`<span class="g">${c.g}</span><span class="n">${c.name}</span>`;b.setAttribute('aria-selected',c.id===activeCat?'true':'false');b.addEventListener('click',()=>{activeCat=c.id;refreshRail();buildPanel();draw();try{localStorage.setItem('wd2_cat',activeCat);}catch(e){}});rail.appendChild(b);});
 }
-function refreshTabs(){
-  TABS.forEach(t=>{$('#tab-'+t.id).setAttribute('aria-selected',t.id===activeTab?'true':'false');$('#pane-'+t.id).hidden=t.id!==activeTab;});
+function refreshRail(){CATS.forEach(c=>$('#cat-'+c.id).setAttribute('aria-selected',c.id===activeCat?'true':'false'));}
+function buildPanel(){
+  const cat=CATS.find(c=>c.id===activeCat);
+  $('#panelTitle').textContent=cat.name;
+  const hasSide=cat.controls.some(c=>c.side);
+  $('#sidepick').hidden=!(hasSide&&!P.sym);
+  const body=$('#panelBody');body.innerHTML='';
+  cat.controls.forEach(c=>{
+    if(c.t==='group'){const g=document.createElement('div');g.className='gt';g.textContent=c.n;body.appendChild(g);return;}
+    const wrap=document.createElement('div');wrap.className='ctl';
+    const lab=document.createElement('div');lab.className='lab';
+    const nm=document.createElement('b');nm.textContent=c.n+(c.side&&!P.sym?(activeSide<0?'（左）':'（右）'):'');lab.appendChild(nm);
+    if(c.t==='slider'){
+      const v=document.createElement('span');v.className='v';v.id='v-'+c.k;lab.appendChild(v);wrap.appendChild(lab);
+      const inp=document.createElement('input');inp.type='range';inp.min=0;inp.max=100;inp.id='in-'+c.k;inp.setAttribute('aria-label',c.n);
+      inp.addEventListener('input',()=>{const val=+inp.value;if(c.side)setSide(c.k,activeSide,val);else P[c.k]=val;v.textContent=val;currentPreset=-1;draw();});
+      inp.addEventListener('change',commit);
+      wrap.appendChild(inp);
+    }else if(c.t==='choice'){
+      wrap.appendChild(lab);
+      const ch=document.createElement('div');ch.className='choices';
+      c.o.forEach((name,i)=>{const bt=document.createElement('button');bt.type='button';bt.className='chip';bt.textContent=name;bt.id=`ch-${c.k}-${i}`;bt.addEventListener('click',()=>{P[c.k]=i;if(c.k==='hairStyle'&&i===4)P.bangs=3;currentPreset=-1;refreshValues();draw();commit();});ch.appendChild(bt);});
+      wrap.appendChild(ch);
+    }else if(c.t==='color'){
+      wrap.appendChild(lab);
+      const row=document.createElement('div');row.className='colors';
+      c.sw.forEach((hex,i)=>{const sw=document.createElement('button');sw.type='button';sw.className='sw';sw.id=`co-${c.k}-${i}`;sw.setAttribute('aria-label',c.n+' '+hex);sw.innerHTML=`<span style="background:${hex}"></span>`;sw.addEventListener('click',()=>{P[c.k]=hex;currentPreset=-1;refreshValues();draw();commit();});row.appendChild(sw);});
+      const ci=document.createElement('input');ci.type='color';ci.id='in-'+c.k;ci.setAttribute('aria-label',c.n+' 自訂');ci.addEventListener('input',()=>{P[c.k]=ci.value;currentPreset=-1;refreshValues();draw();});ci.addEventListener('change',commit);
+      row.appendChild(ci);wrap.appendChild(row);
+    }
+    body.appendChild(wrap);
+  });
+  refreshValues();
 }
 function refreshValues(){
-  TABS.forEach(tab=>tab.controls.forEach(c=>{
-    if(c.t==='slider'){$('#in-'+c.k).value=P[c.k];$('#v-'+c.k).textContent=P[c.k];}
-    else if(c.t==='choice'){c.o.forEach((_,i)=>$(`#ch-${c.k}-${i}`).setAttribute('aria-pressed',P[c.k]===i?'true':'false'));}
-    else if(c.t==='color'){c.sw.forEach((hex,i)=>$(`#co-${c.k}-${i}`).setAttribute('aria-pressed',P[c.k]===hex?'true':'false'));$('#in-'+c.k).value=P[c.k];}
-  }));
-  PRESETS.forEach((_,i)=>$('#preset-'+i).setAttribute('aria-pressed',currentPreset===i?'true':'false'));
+  const cat=CATS.find(c=>c.id===activeCat);
+  cat.controls.forEach(c=>{
+    if(c.t==='slider'){const val=c.side?sv(c.k,activeSide):P[c.k];const el=$('#in-'+c.k);if(el){el.value=val;$('#v-'+c.k).textContent=val;}}
+    else if(c.t==='choice'){c.o.forEach((_,i)=>{const el=$(`#ch-${c.k}-${i}`);if(el)el.setAttribute('aria-pressed',P[c.k]===i?'true':'false');});}
+    else if(c.t==='color'){c.sw.forEach((hex,i)=>{const el=$(`#co-${c.k}-${i}`);if(el)el.setAttribute('aria-pressed',P[c.k]===hex?'true':'false');});const el=$('#in-'+c.k);if(el)el.value=P[c.k];}
+  });
+  $('#btnSym').setAttribute('aria-pressed',P.sym?'true':'false');
+  $('#btnLight').textContent='光照：'+['左側','正面','右側'][P.light];
+  $('#sideL').setAttribute('aria-pressed',activeSide<0?'true':'false');$('#sideR').setAttribute('aria-pressed',activeSide>0?'true':'false');
 }
-function applyPreset(i){currentPreset=i;P=Object.assign({},PRESETS[i].p);refreshValues();render();persist();toast(`已套用「${PRESETS[i].name}」`);}
-function toast(msg){const t=$('#toast');t.textContent=msg;clearTimeout(toast.h);toast.h=setTimeout(()=>{t.textContent='';},2600);}
-function persist(){try{localStorage.setItem('wd_last',encode());localStorage.setItem('wd_preset',String(currentPreset));}catch(e){}}
+function refreshAll(){buildPanel();draw();}
+function toast(msg,el){const t=$(el||'#toast');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(()=>{t.textContent='';},2600);}
+function persist(){try{localStorage.setItem('wd2_last',encode());localStorage.setItem('wd2_preset',String(currentPreset));}catch(e){}}
 
+/* drag handles */
+(function(){
+  let drag=null;
+  function toSvg(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const m=svg.getScreenCTM();if(!m)return {x:0,y:0};const p=pt.matrixTransform(m.inverse());return {x:p.x,y:p.y};}
+  svg.addEventListener('pointerdown',e=>{
+    const g=e.target.closest&&e.target.closest('.handle');if(!g)return;
+    const h=handles.find(x=>x.id===g.dataset.id);if(!h)return;
+    e.preventDefault();
+    const start={};h.maps.forEach(m=>{start[m.k]=(h.side===0||P.sym)?P[m.k]:sv(m.k,h.side);});
+    drag={h,start,p0:toSvg(e)};
+    if(!P.sym&&h.side!==0&&h.side!==activeSide){activeSide=h.side;buildPanel();}
+    svg.setPointerCapture(e.pointerId);
+  });
+  svg.addEventListener('pointermove',e=>{
+    if(!drag)return;const p=toSvg(e);const dx=p.x-drag.p0.x,dy=p.y-drag.p0.y;
+    drag.h.maps.forEach(m=>{const d=m.axis==='x'?dx:dy;const val=clamp(Math.round(drag.start[m.k]+d/m.scale*100*m.sign),0,100);
+      if(SIDE_KEYS.includes(m.k)&&drag.h.side!==0)setSide(m.k,drag.h.side,val);else P[m.k]=val;});
+    currentPreset=-1;refreshValues();draw();
+  });
+  const end=()=>{if(!drag)return;drag=null;commit();};
+  svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+})();
+
+/* gallery */
+function thumbSvg(o){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 600 760');render(s,o,{thumb:true});return s;}
+function loadSaved(){try{return JSON.parse(localStorage.getItem('wd2_saved')||'[]');}catch(e){return [];}}
+function openGallery(){
+  const gp=$('#galPresets');gp.innerHTML='';
+  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='thumb';b.appendChild(thumbSvg(fromPreset(i)));b.insertAdjacentHTML('beforeend',`<span class="t">${p.name}</span><span class="s">${p.info}</span>`);b.addEventListener('click',()=>{P=fromPreset(i);currentPreset=i;refreshAll();commit();closeOv('#ovGallery');toast(`已套用「${p.name}」`);});gp.appendChild(b);});
+  const saved=loadSaved();const gs=$('#galSaved');gs.innerHTML='';$('#galEmpty').hidden=saved.length>0;
+  saved.forEach((it,i)=>{const o=decode(it.code);if(!o)return;const b=document.createElement('div');b.className='thumb';b.tabIndex=0;b.setAttribute('role','button');b.appendChild(thumbSvg(o));b.insertAdjacentHTML('beforeend',`<span class="t">${it.name}</span><span class="s">${it.date}</span>`);
+    const load=()=>{P=o;currentPreset=-1;refreshAll();commit();closeOv('#ovGallery');toast(`已載入「${it.name}」`);};
+    b.addEventListener('click',load);b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();load();}});
+    const del=document.createElement('button');del.type='button';del.className='chip';del.textContent='刪除';del.addEventListener('click',ev=>{ev.stopPropagation();const arr=loadSaved();arr.splice(i,1);try{localStorage.setItem('wd2_saved',JSON.stringify(arr));}catch(e){}openGallery();});b.appendChild(del);gs.appendChild(b);});
+  $('#ovGallery').hidden=false;
+}
+function closeOv(sel){$(sel).hidden=true;}
+function saveFace(){
+  const arr=loadSaved();const n=arr.length+1;const d=new Date();
+  arr.unshift({name:'臉譜 '+n,code:encode(),date:`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`});
+  if(arr.length>12)arr.length=12;
+  try{localStorage.setItem('wd2_saved',JSON.stringify(arr));toast('已存入臉譜庫（這個瀏覽器）');}catch(e){toast('這個瀏覽器不允許儲存，請改用分享數據');}
+}
+/* share */
+function openShare(){
+  const code=encode();$('#codeOut').value=code;
+  const box=$('#qr');box.innerHTML='';
+  try{if(window.QRCode){new QRCode(box,{text:code,width:152,height:152,colorDark:'#1d2530',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});}else box.textContent='二維碼元件未載入，請用文字數據。';}catch(e){box.textContent='數據過長，請用文字數據。';}
+  $('#ovShare').hidden=false;
+}
+
+/* random */
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
 const rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
-function randomize(){
-  const o={};
-  KEYS.forEach(k=>{
-    if(COLOR_KEYS.includes(k)){o[k]=k==='skin'?pick(SKINS):k==='iris'?pick(IRISES):pick(HAIRS);}
-    else if(CHOICE_MAX[k]!==undefined){o[k]=rnd(0,CHOICE_MAX[k]);}
-    else o[k]=rnd(15,85);
-  });
-  if(o.hairStyle===4)o.bangs=3;
-  if(Math.random()<0.6)o.scar=0;
-  if(Math.random()<0.5)o.beard=0;
-  P=o;currentPreset=-1;refreshValues();render();persist();toast('隨機捏了一張臉');
+function randomKey(k){
+  if(COLOR_KEYS.includes(k))return k==='skin'?pick(SKINS):k==='iris'?pick(IRISES):pick(HAIRS);
+  if(k==='sym'||k==='light')return P[k];
+  if(CHOICE_MAX[k]!==undefined)return rnd(0,CHOICE_MAX[k]);
+  return rnd(15,85);
 }
+function randomize(keys){
+  keys.forEach(k=>{const v=randomKey(k);P[k]=v;if(SIDE_KEYS.includes(k)){P[k+'_L']=v;P[k+'_R']=v;}});
+  if(P.hairStyle===4)P.bangs=3;
+  if(keys.includes('scar')&&Math.random()<0.6)P.scar=0;
+  if(keys.includes('beard')&&Math.random()<0.5)P.beard=0;
+  if(keys.includes('faling')&&Math.random()<0.6){P.faling=0;P.wrinkle=0;}
+  currentPreset=-1;refreshAll();commit();
+}
+function catKeys(id){return CATS.find(c=>c.id===id).controls.filter(c=>c.k).map(c=>c.k);}
 
-buildUI();
-// boot: hot snapshot > localStorage > default preset
+/* wire */
+buildRail();
+$('#btnSym').addEventListener('click',()=>{P.sym=P.sym?0:1;if(P.sym){SIDE_KEYS.forEach(k=>{const v=Math.round((P[k+'_L']+P[k+'_R'])/2);P[k]=v;P[k+'_L']=v;P[k+'_R']=v;});}refreshAll();commit();toast(P.sym?'已開啟左右對稱':'已關閉對稱，可分別調整左右');});
+$('#btnLight').addEventListener('click',()=>{P.light=(P.light+1)%3;refreshValues();draw();commit();});
+$('#sideL').addEventListener('click',()=>{activeSide=-1;refreshAll();});
+$('#sideR').addEventListener('click',()=>{activeSide=1;refreshAll();});
+$('#camFull').addEventListener('click',()=>{cam='full';$('#camFull').setAttribute('aria-pressed','true');$('#camFace').setAttribute('aria-pressed','false');draw();});
+$('#camFace').addEventListener('click',()=>{cam='face';$('#camFull').setAttribute('aria-pressed','false');$('#camFace').setAttribute('aria-pressed','true');draw();});
+const cmp=$('#btnCompare');
+const cmpOn=()=>{const base=currentPreset>=0?fromPreset(currentPreset):(hist.u.length?decode(hist.u[0]):null);if(!base){toast('目前沒有可對比的原貌');return;}compareBase=base;cmp.setAttribute('aria-pressed','true');draw();};
+const cmpOff=()=>{if(!compareBase)return;compareBase=null;cmp.setAttribute('aria-pressed','false');draw();};
+cmp.addEventListener('pointerdown',e=>{e.preventDefault();cmpOn();});cmp.addEventListener('pointerup',cmpOff);cmp.addEventListener('pointerleave',cmpOff);cmp.addEventListener('pointercancel',cmpOff);
+cmp.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();cmpOn();}});cmp.addEventListener('keyup',cmpOff);
+$('#btnUndo').addEventListener('click',undo);$('#btnRedo').addEventListener('click',redo);
+$('#btnRandCat').addEventListener('click',()=>{randomize(catKeys(activeCat));toast('隨機了「'+CATS.find(c=>c.id===activeCat).name+'」');});
+$('#btnRandAll').addEventListener('click',()=>{randomize(BASE_KEYS);toast('隨機捏了一張臉');});
+$('#btnReset').addEventListener('click',()=>{const base=currentPreset>=0?fromPreset(currentPreset):fromPreset(0);catKeys(activeCat).forEach(k=>{P[k]=base[k];if(SIDE_KEYS.includes(k)){P[k+'_L']=base[k];P[k+'_R']=base[k];}});refreshAll();commit();toast('已重置本區');});
+$('#btnGallery').addEventListener('click',openGallery);$('#galClose').addEventListener('click',()=>closeOv('#ovGallery'));
+$('#btnSave').addEventListener('click',saveFace);
+$('#btnShare').addEventListener('click',openShare);$('#shClose').addEventListener('click',()=>closeOv('#ovShare'));
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.hidden=true;}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.hidden=true);}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();}});
+$('#btnCopy').addEventListener('click',()=>{const ta=$('#codeOut');const txt=ta.value;const fb=()=>{ta.focus();ta.select();toast('已選取數據，請按複製','#toast2');};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('數據已複製','#toast2')).catch(fb);}else fb();});
+$('#btnImport').addEventListener('click',()=>{const o=decode($('#codeIn').value);if(o){P=o;currentPreset=-1;refreshAll();commit();closeOv('#ovShare');toast('數據已載入');}else toast('數據格式不對，請確認以 WD2. 或 WD1. 開頭且完整','#toast2');});
+
+/* boot */
 function start(data){
   let loaded=false;
   if(data&&data.code){const o=decode(data.code);if(o){P=o;currentPreset=typeof data.preset==='number'?data.preset:-1;loaded=true;}}
-  if(!loaded){try{const c=localStorage.getItem('wd_last');const o=c&&decode(c);if(o){P=o;const pi=parseInt(localStorage.getItem('wd_preset')||'-1',10);currentPreset=isNaN(pi)?-1:pi;loaded=true;}const t=localStorage.getItem('wd_tab');if(t&&TABS.some(x=>x.id===t)){activeTab=t;refreshTabs();}}catch(e){}}
-  if(!loaded){P=Object.assign({},PRESETS[0].p);currentPreset=0;}
-  refreshValues();render();
+  if(!loaded){try{const c=localStorage.getItem('wd2_last');const o=c&&decode(c);if(o){P=o;const pi=parseInt(localStorage.getItem('wd2_preset')||'-1',10);currentPreset=isNaN(pi)?-1:pi;loaded=true;}const t=localStorage.getItem('wd2_cat');if(t&&CATS.some(x=>x.id===t)){activeCat=t;refreshRail();}}catch(e){}}
+  if(!loaded){P=fromPreset(0);currentPreset=0;}
+  lastCommitted=encode();
+  refreshAll();refreshHistBtns();
 }
 try{window.claude?.hot?.snapshot?.(()=>({code:encode(),preset:currentPreset}));}catch(e){}
 if(window.claude?.hot?.ready){window.claude.hot.ready(start);}else{start(window.claude?.hot?.data??{});}
-
-$('#btnRandom').addEventListener('click',randomize);
-$('#btnReset').addEventListener('click',()=>{applyPreset(currentPreset>=0?currentPreset:0);});
-$('#btnSave').addEventListener('click',()=>{try{localStorage.setItem('wd_saved',encode());toast('已存到這個瀏覽器');}catch(e){toast('這個瀏覽器不允許儲存，請改用代碼');}});
-$('#btnLoad').addEventListener('click',()=>{let c=null;try{c=localStorage.getItem('wd_saved');}catch(e){}const o=c&&decode(c);if(o){P=o;currentPreset=-1;refreshValues();render();persist();toast('已讀取我的臉');}else toast('還沒有存過臉');});
-$('#btnCopy').addEventListener('click',()=>{const ta=$('#codeOut');const txt=ta.value;
-  const fallback=()=>{ta.focus();ta.select();toast('已選取代碼，請按複製');};
-  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('代碼已複製')).catch(fallback);}else fallback();});
-$('#btnImport').addEventListener('click',()=>{const o=decode($('#codeIn').value);if(o){P=o;currentPreset=-1;refreshValues();render();persist();toast('代碼已載入');}else toast('代碼格式不對，請確認以 WD1. 開頭且完整');});
 })();
 </script>
