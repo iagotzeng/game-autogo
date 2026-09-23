@@ -1,0 +1,670 @@
+<title>問道棋局立體捏臉</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#111418; --bg-2:#181c22; --glass:rgba(20,24,30,.84); --glass-2:rgba(28,33,41,.92);
+    --line:rgba(201,162,74,.28); --line-2:rgba(255,255,255,.08);
+    --ink:#ece6d8; --ink-2:#9aa3ad; --ink-3:#6b737d;
+    --gold:#c9a24a; --gold-2:#e8cd85; --ice:#7fd4f5;
+    --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+    --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.5;overflow:hidden}
+  .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-inline:16px;padding-block:10px;gap:10px}
+  .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .title{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.08em;white-space:nowrap}
+  .title small{font-family:var(--sans);font-weight:400;font-size:11px;color:var(--ink-3);letter-spacing:.2em;margin-left:8px}
+  .name{font-family:var(--serif);color:var(--gold-2);font-size:14px;letter-spacing:.1em;border-left:1px solid var(--line);padding-left:14px}
+  .spacer{flex:1}
+  .tools{display:flex;gap:6px;flex-wrap:wrap}
+  .tb{border:1px solid var(--line-2);background:var(--glass);color:var(--ink);border-radius:3px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;letter-spacing:.06em;white-space:nowrap}
+  .tb:hover{border-color:var(--gold)}
+  .tb[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-2);background:rgba(201,162,74,.12)}
+  .tb.gold{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+  .tb:disabled{opacity:.4;cursor:default}
+  .tb:focus-visible,.cat:focus-visible,.chip:focus-visible,.sw:focus-visible,input:focus-visible,textarea:focus-visible,.thumb:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+  .main{display:grid;grid-template-columns:76px 1fr minmax(280px,360px);gap:12px;min-height:0}
+  .rail{display:flex;flex-direction:column;gap:4px;overflow-y:auto;scrollbar-width:none;padding-block:2px}
+  .cat{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;background:transparent;color:var(--ink-2);padding:5px 4px;border-radius:4px;cursor:pointer;font:inherit}
+  .cat .g{width:32px;height:32px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--serif);font-size:15px;font-weight:600;color:var(--ink)}
+  .cat .n{font-size:11px;letter-spacing:.1em}
+  .cat:hover .g{border-color:var(--gold)}
+  .cat[aria-selected="true"]{color:var(--gold-2)}
+  .cat[aria-selected="true"] .g{border-color:var(--gold);background:rgba(201,162,74,.14);color:var(--gold-2)}
+  .stage{position:relative;min-height:0;border:1px solid var(--line-2);border-radius:4px;background:radial-gradient(ellipse at 50% 40%,#232a33 0%,#151a20 70%);overflow:hidden}
+  .stage canvas{display:block;width:100%;height:100%;touch-action:none}
+  .stage .hint{position:absolute;left:12px;bottom:10px;font-size:11px;color:var(--ink-3);letter-spacing:.08em;pointer-events:none}
+  .stage .cam{position:absolute;right:10px;top:10px;display:flex;gap:4px}
+  .stage .cam .tb{padding:4px 9px}
+  .hd{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:2px solid #fff;background:#c9a24a;box-shadow:0 0 0 3px rgba(201,162,74,.45);cursor:grab;touch-action:none}
+  .hd:active{cursor:grabbing}
+  .hd[hidden]{display:none}
+  .panel{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line-2);border-radius:4px;background:var(--glass)}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line-2)}
+  .panel .head h2{margin:0;font-family:var(--serif);font-size:15px;letter-spacing:.14em;color:var(--gold-2);font-weight:600}
+  .body{overflow-y:auto;padding:12px 14px 16px;display:grid;gap:13px;scrollbar-width:thin}
+  .ctl{display:grid;gap:5px}
+  .ctl .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px}
+  .ctl .lab b{font-weight:500;letter-spacing:.04em}
+  .ctl .lab .v{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11px}
+  input[type=range]{width:100%;accent-color:var(--gold);margin:0;height:22px}
+  .choices{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{border:1px solid var(--line-2);background:transparent;color:var(--ink);border-radius:3px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+  .chip:hover{border-color:var(--gold)}
+  .chip[aria-pressed="true"]{border-color:var(--gold);background:rgba(201,162,74,.16);color:var(--gold-2)}
+  .colors{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sw{width:24px;height:24px;border-radius:50%;border:2px solid var(--line-2);cursor:pointer;padding:0;background:none}
+  .sw[aria-pressed="true"]{border-color:var(--gold-2);box-shadow:0 0 0 2px var(--bg-2),0 0 0 3px var(--gold)}
+  .sw span{display:block;width:100%;height:100%;border-radius:50%}
+  input[type=color]{width:32px;height:26px;border:1px solid var(--line-2);border-radius:3px;background:var(--bg-2);padding:2px;cursor:pointer}
+  .gt{font-family:var(--serif);font-size:12px;letter-spacing:.2em;color:var(--ink-3);padding-top:8px;border-top:1px dashed var(--line-2);margin-bottom:-4px}
+  .gt:first-child{border-top:0;padding-top:0}
+  .bottom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:space-between}
+  .bottom .grp{display:flex;gap:6px;flex-wrap:wrap}
+  .overlay{position:fixed;inset:0;background:rgba(8,10,13,.72);display:grid;place-items:center;padding:16px;z-index:10}
+  .overlay[hidden]{display:none}
+  .sheet{width:min(860px,100%);max-height:90vh;overflow:auto;background:var(--glass-2);border:1px solid var(--line);border-radius:6px;padding:16px 18px 20px;display:grid;gap:14px}
+  .sheet h3{margin:0;font-family:var(--serif);font-size:16px;letter-spacing:.16em;color:var(--gold-2);display:flex;justify-content:space-between;align-items:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .thumb{border:1px solid var(--line-2);background:#0f1216;border-radius:4px;padding:6px;cursor:pointer;display:grid;gap:4px;text-align:center;color:var(--ink);font:inherit}
+  .thumb:hover{border-color:var(--gold)}
+  .thumb img{width:100%;height:auto;border-radius:3px;aspect-ratio:1/1;object-fit:cover;background:#dfe6ee}
+  .thumb .t{font-family:var(--serif);font-size:12px;letter-spacing:.08em}
+  .thumb .s{font-size:10px;color:var(--ink-3)}
+  .share{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  #qr{width:168px;height:168px;background:#fff;padding:8px;border-radius:4px;color:#1d2530;font-size:11px}
+  #qr img,#qr canvas{display:block;width:152px;height:152px}
+  textarea{width:100%;min-height:64px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;border:1px solid var(--line-2);border-radius:3px;background:#0f1216;color:var(--ink);padding:8px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .toast{font-size:12px;color:var(--gold-2);min-height:1.2em;letter-spacing:.04em}
+  .muted{font-size:11px;color:var(--ink-3);margin:0}
+  .nogl{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--ink-2)}
+  @media (max-width:900px){
+    body{overflow:auto}
+    .app{height:auto}
+    .main{grid-template-columns:1fr;grid-template-rows:auto minmax(52vh,60vh) auto}
+    .rail{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+    .cat{flex:0 0 auto;padding:6px 8px}
+    .panel{max-height:60vh}
+    .share{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:no-preference){.tb,.chip,.cat .g,.thumb{transition:border-color .15s,background-color .15s,color .15s}}
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="title">問道棋局 · 立體捏臉<small>原型 v0.3 · 3D</small></div>
+    <div class="name" id="metaName">青雲劍修</div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button class="tb" id="btnGallery" type="button">臉譜庫</button>
+      <button class="tb" id="btnLight" type="button">光照：左前</button>
+      <button class="tb" id="btnCompare" type="button">按住對比原貌</button>
+    </div>
+  </div>
+  <div class="main">
+    <nav class="rail" id="rail" role="tablist" aria-label="捏臉分區"></nav>
+    <section class="stage" id="stage" aria-label="角色預覽">
+      <canvas id="gl"></canvas>
+      <div id="handles"></div>
+      <div class="cam">
+        <button class="tb" id="vFront" type="button" aria-pressed="true">正面</button>
+        <button class="tb" id="vQuarter" type="button" aria-pressed="false">側四十五</button>
+        <button class="tb" id="vSide" type="button" aria-pressed="false">側面</button>
+        <button class="tb" id="camFace" type="button" aria-pressed="true">臉部</button>
+        <button class="tb" id="camBody" type="button" aria-pressed="false">半身</button>
+      </div>
+      <div class="hint" id="hint">拖曳金色控制點直接調整；拖曳空白處轉動角色，滾輪縮放</div>
+    </section>
+    <aside class="panel" aria-label="細調">
+      <div class="head"><h2 id="panelTitle">骨相</h2><span class="muted" id="panelNote"></span></div>
+      <div class="body" id="panelBody"></div>
+    </aside>
+  </div>
+  <div class="bottom">
+    <div class="grp">
+      <button class="tb" id="btnUndo" type="button" disabled>撤銷</button>
+      <button class="tb" id="btnRedo" type="button" disabled>重做</button>
+      <button class="tb" id="btnRandCat" type="button">隨機本區</button>
+      <button class="tb" id="btnRandAll" type="button">隨機全臉</button>
+      <button class="tb" id="btnReset" type="button">重置本區</button>
+    </div>
+    <span class="toast" id="toast" aria-live="polite"></span>
+    <div class="grp">
+      <button class="tb" id="btnSave" type="button">存入臉譜庫</button>
+      <button class="tb gold" id="btnShare" type="button">分享捏臉數據</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovGallery" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="galTitle">
+    <h3 id="galTitle">臉譜庫 <button class="tb" id="galClose" type="button">關閉</button></h3>
+    <div class="gt">宗門預設</div>
+    <div class="grid" id="galPresets"></div>
+    <div class="gt">我的臉譜（存在這個瀏覽器）</div>
+    <div class="grid" id="galSaved"></div>
+    <p class="muted" id="galEmpty">還沒有存過臉譜。捏好後按「存入臉譜庫」。</p>
+  </div>
+</div>
+<div class="overlay" id="ovShare" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="shTitle">
+    <h3 id="shTitle">分享捏臉數據 <button class="tb" id="shClose" type="button">關閉</button></h3>
+    <div class="share">
+      <div id="qr" aria-label="捏臉數據二維碼"></div>
+      <div style="display:grid;gap:8px">
+        <label class="muted" for="codeOut">捏臉數據（複製給朋友，或用二維碼）</label>
+        <textarea id="codeOut" readonly></textarea>
+        <div class="row"><button class="tb" id="btnCopy" type="button">複製數據</button><span class="toast" id="toast2" aria-live="polite"></span></div>
+        <label class="muted" for="codeIn">貼上別人的數據載入</label>
+        <textarea id="codeIn" placeholder="WD3.…"></textarea>
+        <div class="row"><button class="tb" id="btnImport" type="button">載入數據</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const lerp=(a,b,t)=>a+(b-a)*(t/100);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function hex2rgb(h){h=h.replace('#','');const n=parseInt(h,16);return [(n>>16)&255,(n>>8)&255,n&255];}
+function rgb2hex(r,g,b){return '#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');}
+function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A[0]+(B[0]-A[0])*t,A[1]+(B[1]-A[1])*t,A[2]+(B[2]-A[2])*t);}
+const shade=(h,t)=>mix(h,'#1d2530',t), tint=(h,t)=>mix(h,'#ffffff',t);
+function luma(h){const [r,g,b]=hex2rgb(h);return (0.299*r+0.587*g+0.114*b)/255;}
+
+/* ---------------- data ---------------- */
+const SKINS=['#f4e6dc','#f1d9c6','#e9cdb5','#d9b592','#c2946c','#8f6247'];
+const HAIRS=['#f2f4f7','#c9ced6','#8a8f99','#3b2a22','#1f1b1d','#6b3f2a','#a8743a','#5b7fc2','#8e5aa8'];
+const IRISES=['#6fc3e6','#3d6fb8','#5a8a4a','#4a3c32','#c43a3a','#e0a030','#8e5aa8','#7c8a99'];
+const SHADOWS=[['無',null],['淡紅','#d8707a'],['冰藍','#7fd4f5'],['煙灰','#5a6472'],['赤金','#d9a03a']];
+const LIPS=[['自然',null],['朱紅','#b8302b'],['淡粉','#e8a0a8'],['紫黑','#4a2a3c'],['冰藍','#7fb8d8']];
+const AURAS=[['金','#e8d27a'],['木','#8fd39a'],['水','#7fb8f5'],['火','#f59a7f'],['土','#d4b58a'],['雷','#c9a6ff'],['冰','#7fd4f5'],['風','#b8e8d8']];
+const ROBES=[['青雲宗','#f7f9fb','#5b7fc2'],['神農谷','#e6efe2','#3f7a4e'],['大雷音寺','#f2d9a6','#b8862b'],['血河宗','#2b2530','#a3262b'],['萬妖山','#c9a77a','#6b4a2b'],['逍遙居','#d9dde3','#4a4e8a']];
+
+const CATS=[
+  {id:'bone',g:'骨',name:'骨相',note:'真實 3D 變形',controls:[
+    {t:'group',n:'頭型'},
+    {k:'faceLen',t:'slider',n:'臉長'},{k:'faceWid',t:'slider',n:'臉寬'},{k:'headDepth',t:'slider',n:'頭深'},
+    {t:'group',n:'輪廓'},
+    {k:'jaw',t:'slider',n:'下顎寬'},{k:'chin',t:'slider',n:'下巴前突'},{k:'cheek',t:'slider',n:'顴骨'},{k:'browRidge',t:'slider',n:'眉弓'},{k:'eyeDepth',t:'slider',n:'眼窩深度'},
+    {t:'group',n:'膚色'},{k:'skin',t:'color',n:'膚色',sw:SKINS}
+  ]},
+  {id:'brow',g:'眉',name:'眉',controls:[
+    {k:'browType',t:'choice',n:'眉型',o:['劍眉','柳葉眉','平眉','粗眉']},
+    {k:'browH',t:'slider',n:'眉高'},{k:'browDist',t:'slider',n:'眉距'},{k:'browThick',t:'slider',n:'眉濃'},{k:'browTilt',t:'slider',n:'眉勢（垂 → 揚）'}
+  ]},
+  {id:'eye',g:'眼',name:'眼',controls:[
+    {k:'eyeType',t:'choice',n:'眼型',o:['銳利','圓潤','狹長','下垂']},
+    {k:'eyeDist',t:'slider',n:'眼距'},{k:'eyeH',t:'slider',n:'眼位（高 → 低）'},{k:'eyeTilt',t:'slider',n:'眼角（垂 → 揚）'},{k:'eyeSize',t:'slider',n:'眼大小'},
+    {k:'iris',t:'color',n:'瞳色',sw:IRISES},{k:'lashes',t:'choice',n:'睫毛',o:['無','有']}
+  ]},
+  {id:'nose',g:'鼻',name:'鼻',note:'3D 變形',controls:[
+    {k:'noseH',t:'slider',n:'鼻梁高度'},{k:'noseW',t:'slider',n:'鼻寬'},{k:'noseL',t:'slider',n:'鼻長'},{k:'noseTip',t:'slider',n:'鼻頭'}
+  ]},
+  {id:'mouth',g:'嘴',name:'嘴',controls:[
+    {k:'mouthType',t:'choice',n:'嘴型',o:['冷峻','微笑','抿唇','厚唇']},
+    {k:'mouthH',t:'slider',n:'嘴位（高 → 低）'},{k:'mouthW',t:'slider',n:'嘴寬'},{k:'mouthThick',t:'slider',n:'嘴厚'},{k:'mouthCorner',t:'slider',n:'嘴角（垂 → 揚）'},{k:'lips',t:'slider',n:'唇部立體'}
+  ]},
+  {id:'ear',g:'耳',name:'耳',controls:[{k:'earSize',t:'slider',n:'耳大小'},{k:'earAngle',t:'slider',n:'耳外張'}]},
+  {id:'skin',g:'皮',name:'皮相',controls:[
+    {k:'wocan',t:'choice',n:'臥蠶',o:['無','有']},{k:'faling',t:'slider',n:'法令紋'},
+    {k:'mole',t:'choice',n:'痣',o:['無','眼下','唇邊','眉間']},{k:'freckles',t:'choice',n:'雀斑',o:['無','有']}
+  ]},
+  {id:'hair',g:'髮',name:'髮',controls:[
+    {k:'hairColor',t:'color',n:'髮色',sw:HAIRS},
+    {k:'bangs',t:'choice',n:'瀏海',o:['中分','斜瀏海','齊瀏海','無瀏海']},
+    {k:'topknot',t:'choice',n:'道髻',o:['無','有']},{k:'hairpin',t:'choice',n:'髮簪',o:['無','銀簪','玉簪']},
+    {k:'sideLocks',t:'choice',n:'側髮',o:['無','有']},{k:'longHair',t:'choice',n:'長髮',o:['無','有']},{k:'flow',t:'choice',n:'隨風飄動',o:['無','有']},
+    {k:'beard',t:'choice',n:'鬍鬚',o:['無','八字鬍','山羊鬍']}
+  ]},
+  {id:'makeup',g:'妝',name:'妝容',controls:[
+    {k:'eyeShadow',t:'choice',n:'眼影',o:SHADOWS.map(s=>s[0])},{k:'shadowInt',t:'slider',n:'眼影濃度'},
+    {k:'blush',t:'slider',n:'腮紅'},{k:'lipColor',t:'choice',n:'唇色',o:LIPS.map(l=>l[0])},{k:'lipInt',t:'slider',n:'唇色濃度'}
+  ]},
+  {id:'mark',g:'紋',name:'紋飾',controls:[
+    {k:'forehead',t:'choice',n:'額飾',o:['無','冰晶花鈿','朱砂','金印']},{k:'daoMark',t:'choice',n:'道紋',o:['無','雙頰道紋','眉心道紋']},{k:'scar',t:'choice',n:'疤痕',o:['無','左眼疤','右頰疤']}
+  ]},
+  {id:'robe',g:'衣',name:'服飾',controls:[
+    {k:'robe',t:'choice',n:'宗門道袍',o:ROBES.map(r=>r[0])},{k:'aura',t:'choice',n:'靈根氣息',o:AURAS.map(a=>a[0])},{k:'halo',t:'choice',n:'境界光效',o:['無','金丹光環']},{k:'swords',t:'choice',n:'萬劍朝宗',o:['無','有']}
+  ]}
+];
+const KEYS=['faceLen','faceWid','headDepth','jaw','chin','cheek','browRidge','eyeDepth','skin','browType','browH','browDist','browThick','browTilt','eyeType','eyeDist','eyeH','eyeTilt','eyeSize','iris','lashes','noseH','noseW','noseL','noseTip','mouthType','mouthH','mouthW','mouthThick','mouthCorner','lips','earSize','earAngle','wocan','faling','mole','freckles','hairColor','bangs','topknot','hairpin','sideLocks','longHair','flow','beard','eyeShadow','shadowInt','blush','lipColor','lipInt','forehead','daoMark','scar','robe','aura','halo','swords','light'];
+const CHOICE_MAX={browType:3,eyeType:3,lashes:1,mouthType:3,wocan:1,mole:3,freckles:1,bangs:3,topknot:1,hairpin:2,sideLocks:1,longHair:1,flow:1,beard:2,eyeShadow:4,lipColor:4,forehead:3,daoMark:2,scar:2,robe:5,aura:7,halo:1,swords:1,light:2};
+const COLOR_KEYS=['skin','iris','hairColor'];
+const BONE_KEYS=['faceLen','faceWid','headDepth','jaw','chin','cheek','browRidge','eyeDepth','noseH','noseW','noseL','noseTip','lips','eyeDist','eyeH','eyeSize','mouthH','mouthW','earSize','earAngle'];
+const HAIR_KEYS=['hairColor','topknot','hairpin','sideLocks','longHair','flow','faceLen','faceWid','headDepth'];
+const DEFAULTS={faceLen:50,faceWid:50,headDepth:50,jaw:50,chin:50,cheek:50,browRidge:40,eyeDepth:50,skin:'#f1d9c6',browType:2,browH:50,browDist:50,browThick:50,browTilt:50,eyeType:1,eyeDist:50,eyeH:50,eyeTilt:50,eyeSize:50,iris:'#4a3c32',lashes:0,noseH:50,noseW:50,noseL:50,noseTip:50,mouthType:0,mouthH:50,mouthW:50,mouthThick:50,mouthCorner:50,lips:40,earSize:50,earAngle:40,wocan:0,faling:0,mole:0,freckles:0,hairColor:'#1f1b1d',bangs:3,topknot:0,hairpin:0,sideLocks:1,longHair:1,flow:0,beard:0,eyeShadow:0,shadowInt:50,blush:0,lipColor:0,lipInt:50,forehead:0,daoMark:0,scar:0,robe:0,aura:4,halo:0,swords:0,light:0};
+const PRESETS=[
+  {name:'青雲劍修',info:'青雲宗 · 冰靈根',p:{faceLen:64,faceWid:40,headDepth:50,jaw:38,chin:58,cheek:60,browRidge:55,eyeDepth:55,skin:'#f4e6dc',browType:0,browH:52,browDist:50,browThick:45,browTilt:70,eyeType:0,eyeDist:52,eyeH:48,eyeTilt:70,eyeSize:46,iris:'#6fc3e6',lashes:0,noseH:62,noseW:38,noseL:55,noseTip:40,mouthType:0,mouthH:50,mouthW:44,mouthThick:28,mouthCorner:35,lips:35,earSize:50,earAngle:35,hairColor:'#f2f4f7',bangs:0,topknot:1,hairpin:1,sideLocks:1,longHair:1,flow:1,beard:0,blush:8,robe:0,aura:6,halo:1,swords:1,light:0}},
+  {name:'神農谷丹修',info:'神農谷 · 木靈根',p:{faceLen:42,faceWid:58,headDepth:52,jaw:62,chin:40,cheek:40,browRidge:30,eyeDepth:40,skin:'#f1d9c6',browType:1,browH:60,browDist:55,browThick:35,browTilt:40,eyeType:1,eyeDist:55,eyeH:48,eyeTilt:45,eyeSize:62,iris:'#5a8a4a',lashes:1,noseH:40,noseW:36,noseL:40,noseTip:60,mouthType:1,mouthH:50,mouthW:48,mouthThick:45,mouthCorner:75,lips:55,earSize:45,earAngle:40,wocan:1,hairColor:'#3b2a22',bangs:1,topknot:1,hairpin:2,sideLocks:1,longHair:1,flow:0,beard:0,eyeShadow:1,shadowInt:40,blush:45,lipColor:2,lipInt:60,robe:1,aura:1,halo:0,swords:0,light:0}},
+  {name:'大雷音寺僧',info:'大雷音寺 · 土靈根',p:{faceLen:55,faceWid:62,headDepth:58,jaw:78,chin:50,cheek:50,browRidge:60,eyeDepth:45,skin:'#e9cdb5',browType:2,browH:50,browDist:50,browThick:55,browTilt:45,eyeType:3,eyeDist:50,eyeH:52,eyeTilt:35,eyeSize:45,iris:'#4a3c32',lashes:0,noseH:50,noseW:60,noseL:55,noseTip:65,mouthType:2,mouthH:52,mouthW:50,mouthThick:40,mouthCorner:50,lips:45,earSize:68,earAngle:55,faling:45,hairColor:'#1f1b1d',bangs:3,topknot:0,hairpin:0,sideLocks:0,longHair:0,flow:0,beard:0,forehead:2,robe:2,aura:4,halo:1,swords:0,light:0}},
+  {name:'血河宗魔修',info:'血河宗 · 火靈根',p:{faceLen:68,faceWid:38,headDepth:48,jaw:34,chin:62,cheek:72,browRidge:65,eyeDepth:70,skin:'#f1d9c6',browType:0,browH:45,browDist:40,browThick:55,browTilt:85,eyeType:2,eyeDist:48,eyeH:50,eyeTilt:80,eyeSize:42,iris:'#c43a3a',lashes:0,noseH:66,noseW:40,noseL:60,noseTip:35,mouthType:2,mouthH:50,mouthW:42,mouthThick:25,mouthCorner:20,lips:30,earSize:50,earAngle:30,hairColor:'#1f1b1d',bangs:1,topknot:0,hairpin:0,sideLocks:1,longHair:1,flow:1,beard:0,eyeShadow:1,shadowInt:75,lipColor:3,lipInt:55,daoMark:2,scar:1,robe:3,aura:3,halo:0,swords:0,light:2}},
+  {name:'萬妖山妖修',info:'萬妖山 · 雷靈根',p:{faceLen:54,faceWid:52,headDepth:52,jaw:56,chin:55,cheek:65,browRidge:55,eyeDepth:55,skin:'#d9b592',browType:3,browH:50,browDist:45,browThick:70,browTilt:70,eyeType:0,eyeDist:55,eyeH:50,eyeTilt:75,eyeSize:55,iris:'#e0a030',lashes:0,noseH:50,noseW:52,noseL:50,noseTip:55,mouthType:1,mouthH:50,mouthW:55,mouthThick:35,mouthCorner:70,lips:45,earSize:62,earAngle:75,freckles:1,hairColor:'#6b3f2a',bangs:1,topknot:1,hairpin:0,sideLocks:0,longHair:1,flow:1,beard:0,eyeShadow:4,shadowInt:45,blush:20,daoMark:1,robe:4,aura:5,halo:0,swords:0,light:0}},
+  {name:'逍遙居散修',info:'逍遙居 · 水靈根',p:{faceLen:52,faceWid:54,headDepth:55,jaw:66,chin:45,cheek:50,browRidge:50,eyeDepth:50,skin:'#e9cdb5',browType:3,browH:55,browDist:50,browThick:75,browTilt:30,eyeType:3,eyeDist:50,eyeH:50,eyeTilt:30,eyeSize:50,iris:'#3d6fb8',lashes:0,noseH:55,noseW:58,noseL:56,noseTip:70,mouthType:1,mouthH:50,mouthW:55,mouthThick:40,mouthCorner:85,lips:50,earSize:55,earAngle:50,faling:55,mole:2,hairColor:'#8a8f99',bangs:1,topknot:0,hairpin:0,sideLocks:0,longHair:0,flow:0,beard:2,blush:15,scar:2,robe:5,aura:2,halo:0,swords:0,light:0}}
+];
+function fromPreset(i){return Object.assign({},DEFAULTS,PRESETS[i].p);}
+let P=fromPreset(0), currentPreset=0, activeCat='bone', compareBase=null;
+
+/* ---------------- three.js scene ---------------- */
+const stage=$('#stage'), canvas=$('#gl');
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,preserveDrawingBuffer:true});}catch(e){renderer=null;}
+if(!renderer||!window.THREE){const d=document.createElement('div');d.className='nogl';d.textContent='這個瀏覽器無法啟用 WebGL，3D 原型無法顯示。請改用桌面版 Chrome 或 Edge。';stage.appendChild(d);}
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(28,1,0.1,100);
+const rig=new THREE.Group();scene.add(rig); // rotates with drag
+const charGroup=new THREE.Group();rig.add(charGroup);
+const ambient=new THREE.AmbientLight(0xffffff,0.46);scene.add(ambient);
+const key=new THREE.DirectionalLight(0xfff6e6,0.9);scene.add(key);
+const rim=new THREE.DirectionalLight(0x9fd8ff,0.35);rim.position.set(-2,1,-3);scene.add(rim);
+if(renderer){renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));renderer.outputEncoding=THREE.sRGBEncoding;}
+
+// toon gradient
+const gradData=new Uint8Array([160,160,160, 210,210,210, 255,255,255]);
+const gradientMap=new THREE.DataTexture(gradData,3,1,THREE.RGBFormat);gradientMap.minFilter=THREE.NearestFilter;gradientMap.magFilter=THREE.NearestFilter;gradientMap.needsUpdate=true;
+const col=h=>new THREE.Color(h).convertSRGBToLinear();
+const outlineMat=new THREE.MeshBasicMaterial({color:col('#1d2530'),side:THREE.BackSide});
+function toonMat(color,opts){return new THREE.MeshToonMaterial(Object.assign({color:col(color),gradientMap},opts||{}));}
+function withOutline(mesh,scale){const o=new THREE.Mesh(mesh.geometry,outlineMat);o.scale.setScalar(scale||1.03);mesh.add(o);return mesh;}
+
+/* --- head geometry: displaced sphere, regenerated from parameters --- */
+const HSEG=112,VSEG=84;
+const headGeo=new THREE.SphereGeometry(1,HSEG,VSEG);
+const baseDir=headGeo.attributes.position.array.slice(); // unit directions
+const nVerts=baseDir.length/3;
+// UV: planar projection of the front; back folds to plain-skin margins
+(function(){const uv=headGeo.attributes.uv.array;for(let i=0;i<nVerts;i++){const nx=baseDir[i*3],ny=baseDir[i*3+1],nz=baseDir[i*3+2];const edge=nx>=0?0.985:0.015;let u=0.5+nx*0.62;const t=clamp((0.25-nz)/0.35,0,1);u=u*(1-t)+edge*t;const v=0.5+ny*0.62;uv[i*2]=clamp(u,0.005,0.995);uv[i*2+1]=clamp(v,0.005,0.995);}headGeo.attributes.uv.needsUpdate=true;})();
+const G=(nx,ny,nz,cx,cy,cz,wx,wy,wz)=>Math.exp(-((nx-cx)*(nx-cx)/wx+(ny-cy)*(ny-cy)/wy+(nz-cz)*(nz-cz)/wz));
+let shape={};
+function computeShape(P){
+  const eyeX=lerp(0.30,0.44,P.eyeDist), eyeY=lerp(0.26,0.08,P.eyeH);
+  const mouthY=lerp(-0.40,-0.54,P.mouthH);
+  shape={
+    ax:lerp(0.86,1.12,P.faceWid), ay:lerp(1.02,1.34,P.faceLen), az:lerp(0.9,1.12,P.headDepth),
+    jawK:lerp(0.42,0.0,P.jaw), chin:lerp(-0.02,0.14,P.chin), cheek:lerp(-0.02,0.09,P.cheek), brow:lerp(0,0.07,P.browRidge), socket:lerp(0.01,0.09,P.eyeDepth),
+    noseH:lerp(0.06,0.24,P.noseH), noseW:lerp(0.004,0.014,P.noseW), noseL:lerp(0.02,0.06,P.noseL), noseTip:lerp(0.0,0.06,P.noseTip), lips:lerp(0,0.05,P.lips),
+    eyeX,eyeY,mouthY,mouthW:lerp(0.2,0.42,P.mouthW),
+    noseTipY: eyeY-lerp(0.30,0.44,P.noseL)
+  };
+}
+function radiusAt(nx,ny,nz){
+  const s=shape;let r=1;
+  if(nz>0){
+    r-=s.socket*(G(nx,ny,nz,s.eyeX,s.eyeY+0.02,0.92,0.03,0.012,0.08)+G(nx,ny,nz,-s.eyeX,s.eyeY+0.02,0.92,0.03,0.012,0.08));
+    r+=s.brow*G(nx,ny,nz,0,s.eyeY+0.17,0.95,0.18,0.008,0.1);
+    r+=s.cheek*(G(nx,ny,nz,0.62,s.eyeY-0.22,0.72,0.05,0.03,0.08)+G(nx,ny,nz,-0.62,s.eyeY-0.22,0.72,0.05,0.03,0.08));
+    // nose: bridge ridge + tip
+    r+=s.noseH*G(nx,ny,nz,0,(s.eyeY+s.noseTipY)/2,1.0,s.noseW,s.noseL,0.12);
+    r+=(s.noseH*0.8+s.noseTip)*G(nx,ny,nz,0,s.noseTipY,1.0,s.noseW*2.2,0.004,0.12);
+    r+=s.lips*G(nx,ny,nz,0,s.mouthY,0.93,0.03,0.006,0.1);
+    r-=0.012*G(nx,ny,nz,0,s.mouthY-0.005,0.95,0.02,0.0006,0.1); // lip crease
+  }
+  r+=s.chin*G(nx,ny,nz,0,-0.86,0.5,0.06,0.02,0.1);
+  r-=0.03*G(nx,ny,nz,0,0.55,0.83,0.5,0.03,0.2)*0; // reserved
+  return r;
+}
+function pointAt(nx,ny,nz){ // local space position of a direction
+  const s=shape;const r=radiusAt(nx,ny,nz);
+  let ax=s.ax;if(ny<-0.15){const t=clamp((-ny-0.15)/0.75,0,1);ax*=1-s.jawK*t*t;}
+  return [nx*r*ax,ny*r*s.ay,nz*r*s.az];
+}
+function rebuildHead(){
+  const pos=headGeo.attributes.position.array;
+  for(let i=0;i<nVerts;i++){const p=pointAt(baseDir[i*3],baseDir[i*3+1],baseDir[i*3+2]);pos[i*3]=p[0];pos[i*3+1]=p[1];pos[i*3+2]=p[2];}
+  headGeo.attributes.position.needsUpdate=true;headGeo.computeVertexNormals();headGeo.computeBoundingSphere();
+}
+
+/* --- face texture (eyes, brows, mouth, makeup, bangs) painted on the front --- */
+const TEX=1024;const texCanvas=document.createElement('canvas');texCanvas.width=texCanvas.height=TEX;const tc=texCanvas.getContext('2d');
+const faceTex=new THREE.CanvasTexture(texCanvas);faceTex.encoding=THREE.sRGBEncoding;faceTex.wrapS=faceTex.wrapT=THREE.ClampToEdgeWrapping;faceTex.anisotropy=4;
+const X=nx=>TEX*(0.5+nx*0.62), Y=ny=>TEX*(0.5-ny*0.62), S=v=>v*TEX*0.62; // direction-space to canvas
+function paintFace(P){
+  const c=tc;const skin=P.skin,skinSh=mix(skin,'#7a5a55',0.25);const INK='#1d2530';
+  c.clearRect(0,0,TEX,TEX);c.fillStyle=skin;c.fillRect(0,0,TEX,TEX);
+  const s=shape;
+  const eyeY=s.eyeY, exo=s.eyeX;
+  // blush / freckles
+  if(P.blush>0){c.globalAlpha=lerp(0,0.5,P.blush);for(const sd of [-1,1]){const g=c.createRadialGradient(X(sd*0.5),Y(eyeY-0.28),0,X(sd*0.5),Y(eyeY-0.28),S(0.2));g.addColorStop(0,'#e07a86');g.addColorStop(1,'rgba(224,122,134,0)');c.fillStyle=g;c.fillRect(X(sd*0.5)-S(0.2),Y(eyeY-0.28)-S(0.2),S(0.4),S(0.4));}c.globalAlpha=1;}
+  if(P.freckles===1){c.fillStyle=shade(skin,0.45);c.globalAlpha=0.7;[[-0.5,-0.24],[-0.58,-0.3],[-0.44,-0.32],[-0.64,-0.22],[-0.38,-0.25],[-0.54,-0.38],[0.5,-0.24],[0.58,-0.3],[0.44,-0.32],[0.64,-0.22],[0.38,-0.25],[0.54,-0.38],[-0.15,-0.34],[0.15,-0.34],[-0.06,-0.4],[0.08,-0.42]].forEach(([px,py],i)=>{c.beginPath();c.arc(X(px),Y(eyeY+py+0.1),2.2+(i%3)*0.8,0,Math.PI*2);c.fill();});c.globalAlpha=1;}
+  // eyes
+  const typeRatio=[0.42,0.72,0.3,0.5][P.eyeType], typeTilt=[5,0,3,-6][P.eyeType];
+  const ew=S(lerp(0.105,0.175,P.eyeSize)), eh=ew*typeRatio*lerp(0.85,1.15,P.eyeSize);
+  const KK=TEX/600*1.9;
+  const tilt=(lerp(-9,9,P.eyeTilt)+typeTilt)*KK;
+  const lidW=(P.eyeType===0?3.6:P.eyeType===2?3.2:2.6)*KK;
+  function eye(side){
+    const ex=X(side*exo), ey=Y(eyeY);const sd=side;
+    const ix=ex-ew*sd, iy=ey+tilt*0.5, ox=ex+ew*sd, oy=ey-tilt*0.5;
+    const upper=p=>{p.moveTo(ix,iy);p.bezierCurveTo(ex-ew*0.45*sd,ey-eh-tilt*0.15,ex+ew*0.35*sd,ey-eh-tilt*0.55,ox,oy);};
+    const full=new Path2D();upper(full);full.bezierCurveTo(ex+ew*0.45*sd,ey+eh*0.65,ex-ew*0.4*sd,ey+eh*0.75,ix,iy);full.closePath();
+    const shc=SHADOWS[P.eyeShadow][1];
+    if(shc){c.globalAlpha=lerp(0.12,0.6,P.shadowInt);const g=c.createRadialGradient(ex,ey-eh*0.6,0,ex,ey-eh*0.6,ew*1.2);g.addColorStop(0,shc);g.addColorStop(1,shc+'00');c.fillStyle=g;c.fillRect(ex-ew*1.3,ey-eh*2.2,ew*2.6,eh*3);c.globalAlpha=1;}
+    // socket shading
+    c.globalAlpha=0.35;const sg=c.createRadialGradient(ex,ey-eh*0.4,0,ex,ey-eh*0.4,ew*1.35);sg.addColorStop(0,skinSh);sg.addColorStop(1,skinSh+'00');c.fillStyle=sg;c.fillRect(ex-ew*1.5,ey-eh*2.5,ew*3,eh*4);c.globalAlpha=1;
+    c.fillStyle='#ffffff';c.fill(full);c.lineWidth=1.6*KK;c.strokeStyle=INK;c.stroke(full);
+    c.save();c.clip(full);
+    const irisR=Math.min(eh*1.0,ew*0.42), icx=ex+ew*0.04*sd, icy=ey+eh*0.02;
+    c.fillStyle=P.iris;c.beginPath();c.arc(icx,icy,irisR,0,Math.PI*2);c.fill();c.lineWidth=1.6*KK;c.strokeStyle=shade(P.iris,0.45);c.stroke();
+    c.fillStyle='#0f1a22';c.beginPath();c.arc(icx,icy,irisR*0.45,0,Math.PI*2);c.fill();
+    c.fillStyle='#fff';c.beginPath();c.arc(icx-irisR*0.3*sd,icy-irisR*0.35,irisR*0.22,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(29,37,48,0.14)';c.fillRect(ex-ew,ey-eh*1.3,ew*2,eh*0.95);
+    c.restore();
+    const up=new Path2D();upper(up);c.lineWidth=lidW;c.lineCap='round';c.strokeStyle=INK;c.stroke(up);
+    c.beginPath();c.moveTo(ox,oy);c.lineTo(ox+7*sd*KK,oy-3.5*KK);c.lineWidth=lidW*0.8;c.stroke();
+    c.beginPath();c.moveTo(ex-ew*0.9*sd,ey+eh*0.9);c.bezierCurveTo(ex-ew*0.3*sd,ey+eh*1.25,ex+ew*0.3*sd,ey+eh*1.25,ex+ew*0.8*sd,ey+eh*0.85);c.lineWidth=1.6*KK;c.strokeStyle=skinSh;c.globalAlpha=0.7;c.stroke();c.globalAlpha=1;
+    if(P.wocan===1){c.beginPath();c.moveTo(ex-ew*0.8*sd,ey+eh*1.0);c.bezierCurveTo(ex-ew*0.3*sd,ey+eh*1.9,ex+ew*0.4*sd,ey+eh*1.9,ex+ew*0.85*sd,ey+eh*0.9);c.fillStyle='rgba(255,255,255,0.35)';c.fill();c.strokeStyle=skinSh;c.globalAlpha=0.6;c.lineWidth=1.2*KK;c.stroke();c.globalAlpha=1;}
+    if(P.lashes===1){c.strokeStyle=INK;c.lineWidth=1.6*KK;for(let i=0;i<3;i++){const t=0.55+i*0.18;const px=ex-ew*sd+2*ew*sd*t;const py=ey-eh*(1-Math.abs(t-0.5)*0.6)-tilt*(t-0.5);c.beginPath();c.moveTo(px,py);c.lineTo(px+(3+i)*sd*KK,py-(6+i)*KK);c.stroke();}}
+    c.beginPath();c.moveTo(ex-ew*0.6*sd,ey-eh*1.35);c.bezierCurveTo(ex-ew*0.1*sd,ey-eh*1.75,ex+ew*0.5*sd,ey-eh*1.7,ex+ew*0.95*sd,ey-eh*1.1-tilt*0.4);c.strokeStyle=skinSh;c.lineWidth=1.6*KK;c.globalAlpha=0.8;c.stroke();c.globalAlpha=1;
+    return {ex,ey,ew,eh,ox,oy};
+  }
+  const eL=eye(-1), eR=eye(1);
+  // brows
+  const bt=P.browType;const bb=[{arch:7,lift:9,w:5.2,endF:0.35},{arch:11,lift:-2,w:3.4,endF:0.3},{arch:2,lift:0,w:5.4,endF:0.8},{arch:5,lift:4,w:8,endF:0.7}][bt];
+  const browCol=luma(P.hairColor)>0.6?'#3b4656':shade(P.hairColor,0.2);
+  function brow(e,sd){
+    const k=TEX/600*1.9;const by=e.ey-e.eh-lerp(12,32,P.browH)*k;const bw=bb.w*lerp(0.7,1.4,P.browThick)*k;const blift=(bb.lift+lerp(-9,9,P.browTilt))*k;
+    const ix=e.ex-(e.ew*0.95+lerp(8,-8,P.browDist)*k)*sd, ox=e.ex+e.ew*1.2*sd;const iy=by+3*k, oy=by-blift;const px=ix+(ox-ix)*0.62, py=Math.min(iy,oy)-bb.arch*k;
+    const N=16,up=[],dn=[];const sf=bt===0?0.75:0.55;
+    for(let i=0;i<=N;i++){const t=i/N,u=1-t;const x=u*u*ix+2*u*t*px+t*t*ox,y=u*u*iy+2*u*t*py+t*t*oy;const dx=2*u*(px-ix)+2*t*(ox-px),dy=2*u*(py-iy)+2*t*(oy-py);const l=Math.hypot(dx,dy)||1;const nx=-dy/l,ny=dx/l;const th=bw*(sf+(1-sf)*Math.sin(Math.PI*Math.min(1,t*1.15)))*(1-(1-bb.endF)*t);up.push([x+nx*th/2,y+ny*th/2]);dn.push([x-nx*th/2,y-ny*th/2]);}
+    c.fillStyle=browCol;c.beginPath();up.concat(dn.reverse()).forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();
+  }
+  brow(eL,-1);brow(eR,1);
+  // nose marks (geometry does the shape; only nostril hints)
+  const nty=Y(s.noseTipY), nw=S(lerp(0.06,0.11,P.noseW));
+  c.strokeStyle=skinSh;c.lineWidth=2*TEX/600*1.6;c.globalAlpha=0.75;c.beginPath();c.moveTo(X(0)-nw*0.9,nty-4);c.quadraticCurveTo(X(0)-nw*0.6,nty+10,X(0)-nw*0.2,nty+8);c.moveTo(X(0)+nw*0.9,nty-4);c.quadraticCurveTo(X(0)+nw*0.6,nty+10,X(0)+nw*0.2,nty+8);c.stroke();c.globalAlpha=1;
+  // mouth
+  const mt=P.mouthType;const mY=Y(s.mouthY), mw=S(s.mouthW/2);const k=TEX/600*1.9;
+  const mth=lerp(1.5,9,P.mouthThick)*(mt===3?1.6:1)*k;const cornerDefault=[-3,6,-1,1][mt];const cY=-(lerp(-6,6,P.mouthCorner)+cornerDefault)*k;
+  const lipBase=LIPS[P.lipColor][1]?mix(mix(skin,'#b8555a',0.35),LIPS[P.lipColor][1],lerp(0.2,0.95,P.lipInt)):mix(skin,'#b8555a',0.45);const lip=lipBase,lipLt=mix(lipBase,skin,0.45);
+  const cx=X(0);const cupid=(mt===3?3:1.5)*k;
+  const both=new Path2D();both.moveTo(cx-mw,mY+cY);both.bezierCurveTo(cx-mw*0.5,mY-mth*0.6-cupid,cx-mw*0.15,mY-mth*0.8-cupid,cx,mY-mth*0.3);both.bezierCurveTo(cx+mw*0.15,mY-mth*0.8-cupid,cx+mw*0.5,mY-mth*0.6-cupid,cx+mw,mY+cY);both.bezierCurveTo(cx+mw*0.5,mY+mth*1.3,cx-mw*0.5,mY+mth*1.3,cx-mw,mY+cY);both.closePath();
+  c.globalAlpha=P.lipColor>0?1:(mt===0?0.55:0.9);c.fillStyle=(mt===2&&P.lipColor===0)?lipLt:lip;c.fill(both);c.globalAlpha=1;
+  const lower=new Path2D();lower.moveTo(cx-mw,mY+cY);lower.bezierCurveTo(cx-mw*0.5,mY+mth*1.3,cx+mw*0.5,mY+mth*1.3,cx+mw,mY+cY);c.fillStyle=lipLt;c.globalAlpha=0.9;c.fill(lower);c.globalAlpha=1;
+  c.beginPath();c.moveTo(cx-mw,mY+cY);c.quadraticCurveTo(cx-mw*0.4,mY+(mt===2?1.5:0.5)*k,cx,mY+(mt===2?2:0.3)*k);c.quadraticCurveTo(cx+mw*0.4,mY+(mt===2?1.5:0.5)*k,cx+mw,mY+cY);c.strokeStyle=shade(lip,0.5);c.lineWidth=(mt===2?2.6:2)*k;c.stroke();
+  if(mt===1){c.strokeStyle=skinSh;c.lineWidth=1.6*k;c.beginPath();c.moveTo(cx-mw-4*k,mY+cY-6*k);c.quadraticCurveTo(cx-mw-7*k,mY+cY,cx-mw-3*k,mY+cY+5*k);c.moveTo(cx+mw+4*k,mY+cY-6*k);c.quadraticCurveTo(cx+mw+7*k,mY+cY,cx+mw+3*k,mY+cY+5*k);c.stroke();}
+  if(P.faling>0){c.globalAlpha=lerp(0,0.75,P.faling);c.strokeStyle=skinSh;c.lineWidth=1.8*k;c.beginPath();c.moveTo(cx-nw*0.9,nty+2);c.bezierCurveTo(cx-nw*1.6,nty+14*k,cx-mw*1.25,mY-6*k,cx-mw*1.2,mY+8*k);c.moveTo(cx+nw*0.9,nty+2);c.bezierCurveTo(cx+nw*1.6,nty+14*k,cx+mw*1.25,mY-6*k,cx+mw*1.2,mY+8*k);c.stroke();c.globalAlpha=1;}
+  // beard (painted)
+  const bc=luma(P.hairColor)>0.6?'#9aa5b3':shade(P.hairColor,0.15);
+  if(P.beard===1){c.strokeStyle=bc;c.lineWidth=4.5*k;c.lineCap='round';c.beginPath();c.moveTo(cx-3*k,mY-mth-6*k);c.bezierCurveTo(cx-mw*0.6,mY-mth-10*k,cx-mw*1.1,mY-2*k,cx-mw*1.3,mY+10*k);c.moveTo(cx+3*k,mY-mth-6*k);c.bezierCurveTo(cx+mw*0.6,mY-mth-10*k,cx+mw*1.1,mY-2*k,cx+mw*1.3,mY+10*k);c.stroke();}
+  else if(P.beard===2){c.fillStyle=bc;c.beginPath();c.moveTo(cx-mw*0.6,mY+mth*1.6);c.bezierCurveTo(cx-mw*0.5,mY+mth*1.6+S(0.1),cx-6*k,mY+S(0.24),cx,mY+S(0.28));c.bezierCurveTo(cx+6*k,mY+S(0.24),cx+mw*0.5,mY+mth*1.6+S(0.1),cx+mw*0.6,mY+mth*1.6);c.closePath();c.fill();c.strokeStyle=INK;c.lineWidth=2*k;c.stroke();}
+  // mole
+  c.fillStyle='#3b2a22';
+  if(P.mole===1){c.beginPath();c.arc(eR.ex+eR.ew*0.3,eR.ey+eR.eh*2.4,2.4*k,0,Math.PI*2);c.fill();}
+  else if(P.mole===2){c.beginPath();c.arc(cx-mw-10*k,mY-8*k,2.4*k,0,Math.PI*2);c.fill();}
+  else if(P.mole===3){c.beginPath();c.arc(cx,eL.ey-eL.eh*2.6,2.4*k,0,Math.PI*2);c.fill();}
+  // marks
+  const fhY=Y(eyeY+0.36);
+  if(P.forehead===1){c.save();c.translate(cx,fhY);c.scale(k,k);c.fillStyle='#bfefff';c.strokeStyle='#5fb8d8';c.lineWidth=1.2;c.beginPath();[[0,-13],[5,-4],[14,-2],[6,4],[8,13],[0,8],[-8,13],[-6,4],[-14,-2],[-5,-4]].forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();c.fill();c.stroke();c.restore();}
+  else if(P.forehead===2){c.fillStyle='#b8302b';c.beginPath();c.arc(cx,fhY,5*k,0,Math.PI*2);c.fill();}
+  else if(P.forehead===3){c.strokeStyle='#c9a24a';c.lineWidth=2.2*k;c.beginPath();c.moveTo(cx,fhY-11*k);c.lineTo(cx+9*k,fhY);c.lineTo(cx,fhY+11*k);c.lineTo(cx-9*k,fhY);c.closePath();c.stroke();c.fillStyle='#c9a24a';c.beginPath();c.arc(cx,fhY,3*k,0,Math.PI*2);c.fill();}
+  if(P.daoMark===1){c.strokeStyle='#5b7fc2';c.lineWidth=2*k;c.globalAlpha=0.85;for(const sd of [-1,1]){c.beginPath();c.moveTo(X(sd*0.66),Y(eyeY-0.3));c.quadraticCurveTo(X(sd*0.72),Y(eyeY-0.38),X(sd*0.66),Y(eyeY-0.47));c.moveTo(X(sd*0.57),Y(eyeY-0.32));c.quadraticCurveTo(X(sd*0.62),Y(eyeY-0.38),X(sd*0.57),Y(eyeY-0.45));c.stroke();}c.globalAlpha=1;}
+  else if(P.daoMark===2){c.strokeStyle='#5b7fc2';c.lineWidth=2*k;c.globalAlpha=0.85;c.beginPath();c.moveTo(cx,Y(eyeY+0.14));c.lineTo(cx,Y(eyeY+0.30));c.moveTo(cx-5*k,Y(eyeY+0.25));c.lineTo(cx+5*k,Y(eyeY+0.25));c.stroke();c.globalAlpha=1;}
+  if(P.scar===1){c.strokeStyle='#b56a6a';c.lineWidth=2.4*k;c.lineCap='round';c.beginPath();c.moveTo(eL.ex-eL.ew*0.3,eL.ey-eL.eh*2.4);c.lineTo(eL.ex+eL.ew*0.5,eL.ey+eL.eh*2.6);c.stroke();c.lineWidth=1.6*k;c.beginPath();c.moveTo(eL.ex-4*k,eL.ey-eL.eh*1.9);c.lineTo(eL.ex+4*k,eL.ey-eL.eh*1.9+2*k);c.moveTo(eL.ex+4*k,eL.ey+eL.eh*1.9);c.lineTo(eL.ex+12*k,eL.ey+eL.eh*1.9+2*k);c.stroke();}
+  else if(P.scar===2){c.strokeStyle='#b56a6a';c.lineWidth=2.4*k;c.lineCap='round';c.beginPath();c.moveTo(X(0.5),Y(eyeY-0.2));c.lineTo(X(0.72),Y(eyeY-0.5));c.stroke();}
+  // painted hair: hairline + bangs over the forehead
+  const hair=P.hairColor, hairDk=luma(hair)>0.6?mix(hair,'#8fa3b8',0.45):shade(hair,0.35);
+  const hlY=Y(eyeY+0.44); // hairline
+  c.fillStyle=hair;c.strokeStyle=INK;c.lineWidth=3*k*0.8;c.lineJoin='round';
+  // scalp region above hairline (blends into the 3D cap)
+  c.beginPath();c.moveTo(X(-1),Y(1));c.lineTo(X(1),Y(1));c.lineTo(X(1),hlY-S(0.02));c.quadraticCurveTo(X(0.55),hlY-S(0.08),X(0.72),hlY);c.quadraticCurveTo(X(0.5),hlY+S(0.03),X(0),hlY+S(0.01));c.quadraticCurveTo(X(-0.5),hlY+S(0.03),X(-0.72),hlY);c.quadraticCurveTo(X(-0.55),hlY-S(0.08),X(-1),hlY-S(0.02));c.closePath();c.fill();c.stroke();
+  const b=P.bangs;
+  const lock=(sd)=>{c.beginPath();c.moveTo(X(sd*0.01),hlY-S(0.03));c.bezierCurveTo(X(sd*0.35),hlY+S(0.02),X(sd*0.66),Y(eyeY+0.28),X(sd*0.82),Y(eyeY-0.02));c.lineTo(X(sd*0.66),Y(eyeY-0.06));c.bezierCurveTo(X(sd*0.55),Y(eyeY+0.22),X(sd*0.28),hlY+S(0.12),X(sd*0.02),hlY+S(0.06));c.closePath();c.fill();c.lineWidth=2*k;c.stroke();};
+  if(b===0){lock(-1);lock(1);c.beginPath();c.moveTo(X(-0.005),hlY-S(0.02));c.bezierCurveTo(X(-0.03),hlY+S(0.08),X(-0.02),hlY+S(0.14),X(0.01),hlY+S(0.2));c.bezierCurveTo(X(0.015),hlY+S(0.12),X(0.03),hlY+S(0.06),X(0.015),hlY-S(0.02));c.closePath();c.fill();c.stroke();}
+  else if(b===1){c.beginPath();c.moveTo(X(0.55),hlY-S(0.02));c.bezierCurveTo(X(0.1),hlY+S(0.02),X(-0.45),Y(eyeY+0.24),X(-0.8),Y(eyeY+0.02));c.lineTo(X(-0.9),Y(eyeY+0.3));c.bezierCurveTo(X(-0.5),hlY-S(0.1),X(0.1),hlY-S(0.14),X(0.55),hlY-S(0.02));c.closePath();c.fill();c.lineWidth=2*k;c.stroke();c.strokeStyle=hairDk;c.lineWidth=2*k;c.beginPath();c.moveTo(X(0.3),hlY);c.bezierCurveTo(X(-0.1),hlY+S(0.06),X(-0.4),Y(eyeY+0.25),X(-0.62),Y(eyeY+0.1));c.stroke();}
+  else if(b===2){const bot=eL.ey-eL.eh-6*k;c.beginPath();c.moveTo(X(-0.9),hlY-S(0.06));c.lineTo(X(-0.86),bot-10*k);for(let i=0;i<=6;i++){const x=X(-0.82+1.64*i/6);c.lineTo(x,bot+(i%2?0:-8*k));}c.lineTo(X(0.86),bot-10*k);c.lineTo(X(0.9),hlY-S(0.06));c.closePath();c.fill();c.lineWidth=2*k;c.stroke();}
+  else{c.strokeStyle=hairDk;c.lineWidth=2*k;c.globalAlpha=0.7;c.beginPath();c.moveTo(X(-0.55),hlY+S(0.01));c.quadraticCurveTo(X(0),hlY-S(0.02),X(0.55),hlY+S(0.01));c.stroke();c.globalAlpha=1;}
+  faceTex.needsUpdate=true;
+  return {eL,eR,mY,mw};
+}
+
+/* --- other body parts --- */
+const skinMat=toonMat('#f1d9c6',{map:faceTex});
+const skinPlainMat=toonMat('#f1d9c6');
+const head=withOutline(new THREE.Mesh(headGeo,skinMat),1.028);charGroup.add(head);
+const earGeo=new THREE.SphereGeometry(1,24,16);
+const ears=[-1,1].map(sd=>{const m=withOutline(new THREE.Mesh(earGeo,skinPlainMat),1.08);charGroup.add(m);return m;});
+const neck=withOutline(new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.34,0.9,32,1,true),skinPlainMat),1.04);neck.position.y=-1.15;charGroup.add(neck);
+const robeMat=toonMat('#f7f9fb'), trimMat=toonMat('#5b7fc2');
+const robe=withOutline(new THREE.Mesh(new THREE.LatheGeometry([new THREE.Vector2(0.001,-3.4),new THREE.Vector2(2.05,-3.4),new THREE.Vector2(1.95,-2.5),new THREE.Vector2(1.7,-2.0),new THREE.Vector2(1.2,-1.7),new THREE.Vector2(0.6,-1.5),new THREE.Vector2(0.38,-1.42)].map(v=>v),48),robeMat),1.02);charGroup.add(robe);
+function taperedTube(points,r0,r1,segs,radial,closed){
+  const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],p[1],p[2])));segs=segs||24;radial=radial||10;
+  const fr=curve.computeFrenetFrames(segs,false);const pos=[],idx=[];
+  for(let i=0;i<=segs;i++){const t=i/segs;const p=curve.getPointAt(t);const r=r0+(r1-r0)*t;const n=fr.normals[i],b=fr.binormals[i];
+    for(let j=0;j<radial;j++){const a=j/radial*Math.PI*2;const cx=Math.cos(a),sx=Math.sin(a);pos.push(p.x+r*(cx*n.x+sx*b.x),p.y+r*(cx*n.y+sx*b.y),p.z+r*(cx*n.z+sx*b.z));}}
+  for(let i=0;i<segs;i++)for(let j=0;j<radial;j++){const a=i*radial+j,b2=i*radial+(j+1)%radial,c=(i+1)*radial+j,d=(i+1)*radial+(j+1)%radial;idx.push(a,b2,c,b2,d,c);}
+  // caps
+  const tipIdx=pos.length/3;const tip=curve.getPointAt(1);pos.push(tip.x,tip.y,tip.z);for(let j=0;j<radial;j++){idx.push(segs*radial+j,segs*radial+(j+1)%radial,tipIdx);}
+  const startIdx=pos.length/3;const st=curve.getPointAt(0);pos.push(st.x,st.y,st.z);for(let j=0;j<radial;j++){idx.push(startIdx,(j+1)%radial,j);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+// collar bands
+const collar=new THREE.Group();charGroup.add(collar);
+[[1,false],[-1,true]].forEach(([sd,over])=>{const pts=[[sd*1.15,-1.5,0.75],[sd*0.6,-1.85,0.95],[sd*0.12,-2.35,1.02],[-sd*0.1,-2.7,1.0]];const m=new THREE.Mesh(taperedTube(pts,0.13,0.13,18,10),trimMat);const o=new THREE.Mesh(taperedTube(pts,0.165,0.165,18,10),outlineMat);if(over){m.position.z+=0.04;o.position.z+=0.04;}collar.add(o);collar.add(m);});
+const icPts=[[-0.55,-1.4,0.72],[0,-1.95,0.98],[0.55,-1.4,0.72]];const innerCollar=new THREE.Mesh(taperedTube(icPts,0.09,0.09,12,8),toonMat('#ffffff'));charGroup.add(new THREE.Mesh(taperedTube(icPts,0.12,0.12,12,8),outlineMat));charGroup.add(innerCollar);
+// hair group (rebuilt)
+let hairGroup=new THREE.Group();charGroup.add(hairGroup);
+let hairMat=toonMat('#f2f4f7');
+function rebuildHair(P){
+  charGroup.remove(hairGroup);hairGroup=new THREE.Group();charGroup.add(hairGroup);
+  hairMat=toonMat(P.hairColor);
+  const s=shape;const ax=s.ax,ay=s.ay,az=s.az;
+  const add=(geo,mat,scale)=>{const m=withOutline(new THREE.Mesh(geo,mat||hairMat),scale||1.03);hairGroup.add(m);return m;};
+  const addTube=(pts,r0,r1,segs,radial)=>{const m=new THREE.Mesh(taperedTube(pts,r0,r1,segs,radial),hairMat);const o=new THREE.Mesh(taperedTube(pts,r0+0.035,r1+0.03,segs,radial),outlineMat);hairGroup.add(m);hairGroup.add(o);return m;};
+  // cap
+  const cap=add(new THREE.SphereGeometry(1,64,32,0,Math.PI*2,0,Math.PI*0.42));cap.scale.set(ax*1.07,ay*1.07,az*1.09);cap.position.set(0,0.0,-0.05);
+  // back mass
+  if(P.longHair===1){const back=add(new THREE.SphereGeometry(1,48,32));back.scale.set(ax*1.12,ay*1.55,az*0.85);back.position.set(0,-0.62*ay,-0.42*az);}
+  else{const back=add(new THREE.SphereGeometry(1,48,32));back.scale.set(ax*1.08,ay*1.0,az*0.95);back.position.set(0,-0.05*ay,-0.2*az);}
+  // side locks
+  if(P.sideLocks===1){[-1,1].forEach(sd=>{addTube([[sd*0.92*ax,0.42*ay,0.32*az],[sd*1.0*ax,-0.2*ay,0.45*az],[sd*0.98*ax,-0.9*ay,0.5*az],[sd*0.92*ax,-1.7*ay,0.55*az]],0.12,0.04,20,10);});}
+  // flowing strands (to +x)
+  if(P.flow===1&&P.longHair===1){[[0.1,0.05],[0.3,-0.25],[0.2,-0.55]].forEach(([y0,yEnd],i)=>{addTube([[0.7*ax,y0*ay,-0.6*az],[1.5*ax,(y0+0.1)*ay,-0.5*az],[2.4*ax,(yEnd+0.2)*ay,-0.35*az],[3.3*ax,yEnd*ay,-0.2*az]],0.2-i*0.03,0.03,26,10);});}
+  // topknot + hairpin
+  if(P.topknot===1){const base=add(new THREE.CylinderGeometry(0.22,0.3,0.25,24));base.position.set(0,1.05*ay,-0.05);const bun=add(new THREE.SphereGeometry(0.3,32,20));bun.scale.set(1,0.8,1);bun.position.set(0,1.28*ay,-0.05);
+    if(P.hairpin>0){const pc=P.hairpin===1?'#c7d3e0':'#7fc9a4';const pinMat=toonMat(pc);const pin=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.02,1.5,12),pinMat);pin.rotation.z=Math.PI/2-0.12;pin.position.set(0.15,1.32*ay,0.02);const po=new THREE.Mesh(pin.geometry,outlineMat);po.scale.set(1.7,1.01,1.7);pin.add(po);hairGroup.add(pin);const orn=new THREE.Mesh(new THREE.SphereGeometry(0.07,16,12),toonMat(P.hairpin===1?'#7fd4f5':'#3f8a63'));orn.position.set(0.9,1.4*ay,0.02);hairGroup.add(withOutline(orn,1.2));}}
+}
+// halo, aura, swords, backdrop
+const halo=new THREE.Group();charGroup.add(halo);
+[[1.72,0.02,0.7],[1.85,0.008,0.5],[1.6,0.008,0.55]].forEach(([r,t,op])=>{const m=new THREE.Mesh(new THREE.TorusGeometry(r,t,8,96),new THREE.MeshBasicMaterial({color:col('#d9b45a'),transparent:true,opacity:op}));m.position.set(0,-0.1,-0.9);halo.add(m);});
+function auraTexture(hex){const cv=document.createElement('canvas');cv.width=cv.height=256;const g=cv.getContext('2d');const gr=g.createRadialGradient(128,128,0,128,128,128);gr.addColorStop(0,hex);gr.addColorStop(0.5,hex+'66');gr.addColorStop(1,hex+'00');g.fillStyle=gr;g.fillRect(0,0,256,256);const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;return t;}
+const auraSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:auraTexture('#7fd4f5'),transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0.55}));auraSprite.scale.set(7,8,1);auraSprite.position.set(0,-0.8,-1.6);charGroup.add(auraSprite);
+const swordGroup=new THREE.Group();scene.add(swordGroup);
+function buildSwords(hex){while(swordGroup.children.length)swordGroup.remove(swordGroup.children[0]);const mat=new THREE.MeshBasicMaterial({color:col(hex),transparent:true,opacity:0.45});const bladeGeo=new THREE.ConeGeometry(0.06,1.3,4);const guardGeo=new THREE.BoxGeometry(0.22,0.05,0.05);
+  for(let i=0;i<22;i++){const ang=(i/22)*Math.PI*2;const rad=3.2+((i*7)%5)*0.35;const x=Math.cos(ang)*rad*1.1,y=Math.sin(ang)*rad*0.95+0.2;const g=new THREE.Group();const b=new THREE.Mesh(bladeGeo,mat);b.position.y=0.65;g.add(b);const gd=new THREE.Mesh(guardGeo,mat);g.add(gd);g.position.set(x,y,-2.5-((i*3)%4)*0.4);g.rotation.z=Math.atan2(-y+0.2,-x)-Math.PI/2;swordGroup.add(g);}}
+buildSwords('#7fd4f5');
+(function backdrop(){const cv=document.createElement('canvas');cv.width=cv.height=1024;const g=cv.getContext('2d');const gr=g.createRadialGradient(512,420,60,512,512,720);gr.addColorStop(0,'#fbfcfe');gr.addColorStop(0.55,'#e9eef4');gr.addColorStop(1,'#c9d4e0');g.fillStyle=gr;g.fillRect(0,0,1024,1024);
+  const mtn=(pts,col,op)=>{g.globalAlpha=op;g.fillStyle=col;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.lineTo(1024,1024);g.lineTo(0,1024);g.closePath();g.fill();g.globalAlpha=1;};
+  mtn([[0,760],[120,700],[260,740],[400,660],[540,720],[700,640],[860,720],[1024,680]],'#8fa0b4',0.35);mtn([[0,860],[150,820],[300,850],[460,800],[620,840],[800,790],[1024,830]],'#6d7f96',0.4);
+  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;const m=new THREE.Mesh(new THREE.PlaneGeometry(26,26),new THREE.MeshBasicMaterial({map:t}));m.position.set(0,-1,-9);scene.add(m);})();
+
+/* ---------------- apply parameters ---------------- */
+let faceInfo=null;
+function applyAll(P,opts){
+  opts=opts||{};
+  computeShape(P);
+  rebuildHead();
+  faceInfo=paintFace(P);
+  skinMat.color.copy(col(P.skin));skinPlainMat.color.copy(col(P.skin));
+  const es=lerp(0.75,1.3,P.earSize), ang=lerp(-0.05,0.18,P.earAngle);
+  ears.forEach((m,i)=>{const sd=i?1:-1;m.scale.set(0.12*es,0.2*es,0.08*es);m.position.set(sd*(shape.ax*0.97+ang),shape.eyeY*shape.ay-0.1,-0.02);m.rotation.y=sd*0.35;m.rotation.z=sd*ang*1.5;});
+  rebuildHair(P);
+  robeMat.color.copy(col(ROBES[P.robe][1]));trimMat.color.copy(col(ROBES[P.robe][2]));
+  halo.visible=P.halo===1;
+  auraSprite.material.map=auraTexture(AURAS[P.aura][1]);auraSprite.material.needsUpdate=true;
+  swordGroup.visible=P.swords===1;if(P.swords===1)buildSwords(AURAS[P.aura][1]);
+  const lp=[[-2.5,2.2,3.5],[0,1.8,4],[2.5,2.2,3.5]][P.light];key.position.set(lp[0],lp[1],lp[2]);
+}
+function applyLight(P){const lp=[[-2.5,2.2,3.5],[0,1.8,4],[2.5,2.2,3.5]][P.light];key.position.set(lp[0],lp[1],lp[2]);}
+
+/* ---------------- camera / interaction ---------------- */
+let cam='face', view='front', yaw=0, pitch=0, zoom=1;
+const VIEWS={front:0,quarter:-0.7,side:-1.45};
+function camTarget(){return cam==='face'?{d:7.4,y:0.05}:{d:13.5,y:-1.1};}
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h||!renderer)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();}
+window.addEventListener('resize',resize);
+function frame(){
+  if(!renderer)return;
+  const t=camTarget();camera.position.set(0,t.y+0.1,t.d/zoom);camera.lookAt(0,t.y,0);
+  rig.rotation.y+=(yaw-rig.rotation.y)*0.2;rig.rotation.x+=(pitch-rig.rotation.x)*0.2;
+  renderer.render(scene,camera);
+  updateHandles();
+  requestAnimationFrame(frame);
+}
+// orbit on empty space
+(function(){let d=null;canvas.addEventListener('pointerdown',e=>{d={x:e.clientX,y:e.clientY,yaw,pitch};canvas.setPointerCapture(e.pointerId);});
+  canvas.addEventListener('pointermove',e=>{if(!d)return;yaw=d.yaw+(e.clientX-d.x)*0.008;pitch=clamp(d.pitch+(e.clientY-d.y)*0.005,-0.4,0.4);});
+  const end=()=>{d=null;};canvas.addEventListener('pointerup',end);canvas.addEventListener('pointercancel',end);
+  canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?0.92:1.08),0.6,2.2);},{passive:false});})();
+
+/* ---------------- drag handles (screen-space, anchored to 3D points) ---------------- */
+const HANDLE_DEFS={
+  bone:[{id:'cheekR',dir:[0.62,-0.22,0.72],maps:[{k:'faceWid',axis:'x',range:0.5,sign:1},{k:'cheek',axis:'x',range:0.25,sign:1}]},{id:'cheekL',dir:[-0.62,-0.22,0.72],maps:[{k:'faceWid',axis:'x',range:0.5,sign:-1},{k:'cheek',axis:'x',range:0.25,sign:-1}]},
+        {id:'jawR',dir:[0.72,-0.62,0.35],maps:[{k:'jaw',axis:'x',range:0.45,sign:1}]},{id:'jawL',dir:[-0.72,-0.62,0.35],maps:[{k:'jaw',axis:'x',range:0.45,sign:-1}]},
+        {id:'chin',dir:[0,-0.98,0.2],maps:[{k:'faceLen',axis:'y',range:0.45,sign:1}]},{id:'brow',dir:[0,0.42,0.9],maps:[{k:'browRidge',axis:'y',range:0.2,sign:-1}]}],
+  brow:[{id:'browR',eye:1,part:'brow',maps:[{k:'browH',axis:'y',range:0.2,sign:-1},{k:'browDist',axis:'x',range:0.16,sign:1}]},{id:'browL',eye:-1,part:'brow',maps:[{k:'browH',axis:'y',range:0.2,sign:-1},{k:'browDist',axis:'x',range:0.16,sign:-1}]},{id:'browOR',eye:1,part:'browO',maps:[{k:'browTilt',axis:'y',range:0.18,sign:-1}]},{id:'browOL',eye:-1,part:'browO',maps:[{k:'browTilt',axis:'y',range:0.18,sign:-1}]}],
+  eye:[{id:'eyeR',eye:1,part:'eye',maps:[{k:'eyeDist',axis:'x',range:0.24,sign:1},{k:'eyeH',axis:'y',range:0.3,sign:1}]},{id:'eyeL',eye:-1,part:'eye',maps:[{k:'eyeDist',axis:'x',range:0.24,sign:-1},{k:'eyeH',axis:'y',range:0.3,sign:1}]},{id:'eyeOR',eye:1,part:'eyeO',maps:[{k:'eyeTilt',axis:'y',range:0.16,sign:-1}]},{id:'eyeOL',eye:-1,part:'eyeO',maps:[{k:'eyeTilt',axis:'y',range:0.16,sign:-1}]},{id:'eyeTR',eye:1,part:'eyeT',maps:[{k:'eyeSize',axis:'y',range:0.14,sign:-1}]}],
+  nose:[{id:'noseTip',part:'noseTip',maps:[{k:'noseL',axis:'y',range:0.28,sign:1},{k:'noseW',axis:'x',range:0.12,sign:1}]},{id:'noseB',part:'noseB',maps:[{k:'noseH',axis:'y',range:0.3,sign:-1}]}],
+  mouth:[{id:'mouthC',part:'mouthC',maps:[{k:'mouthH',axis:'y',range:0.2,sign:1}]},{id:'mouthR',part:'mouthR',maps:[{k:'mouthW',axis:'x',range:0.2,sign:1},{k:'mouthCorner',axis:'y',range:0.12,sign:-1}]},{id:'mouthB',part:'mouthB',maps:[{k:'mouthThick',axis:'y',range:0.1,sign:1}]}],
+  ear:[{id:'earR',part:'earR',maps:[{k:'earSize',axis:'y',range:0.2,sign:1},{k:'earAngle',axis:'x',range:0.25,sign:1}]},{id:'earL',part:'earL',maps:[{k:'earSize',axis:'y',range:0.2,sign:1},{k:'earAngle',axis:'x',range:0.25,sign:-1}]}]
+};
+function dirToLocal(d){const l=Math.hypot(d[0],d[1],d[2]);const p=pointAt(d[0]/l,d[1]/l,d[2]/l);return new THREE.Vector3(p[0],p[1],p[2]);}
+function anchorFor(h){
+  const s=shape;
+  if(h.dir)return dirToLocal(h.dir).multiplyScalar(1.02);
+  const eyeH_=lerp(0.09,0.15,P.eyeSize);
+  switch(h.part){
+    case 'eye':return dirToLocal([h.eye*s.eyeX,s.eyeY,0.9]).multiplyScalar(1.03);
+    case 'eyeO':return dirToLocal([h.eye*(s.eyeX+eyeH_),s.eyeY+0.01,0.88]).multiplyScalar(1.03);
+    case 'eyeT':return dirToLocal([h.eye*s.eyeX,s.eyeY+eyeH_*0.5,0.9]).multiplyScalar(1.03);
+    case 'brow':return dirToLocal([h.eye*s.eyeX,s.eyeY+0.12+lerp(0,0.06,P.browH),0.9]).multiplyScalar(1.04);
+    case 'browO':return dirToLocal([h.eye*(s.eyeX+eyeH_*1.2),s.eyeY+0.13+lerp(-0.03,0.06,P.browTilt),0.85]).multiplyScalar(1.04);
+    case 'noseTip':return dirToLocal([0.05,s.noseTipY,1]).multiplyScalar(1.02);
+    case 'noseB':return dirToLocal([0,(s.eyeY+s.noseTipY)/2,1]).multiplyScalar(1.03);
+    case 'mouthC':return dirToLocal([0,s.mouthY,0.95]).multiplyScalar(1.03);
+    case 'mouthR':return dirToLocal([s.mouthW/2,s.mouthY,0.93]).multiplyScalar(1.03);
+    case 'mouthB':return dirToLocal([0,s.mouthY-0.06,0.95]).multiplyScalar(1.03);
+    case 'earR':return ears[1].position.clone().add(new THREE.Vector3(0.12,0,0));
+    case 'earL':return ears[0].position.clone().add(new THREE.Vector3(-0.12,0,0));
+  }
+  return new THREE.Vector3();
+}
+const handleLayer=$('#handles');let handleEls={};
+function buildHandles(){handleLayer.innerHTML='';handleEls={};(HANDLE_DEFS[activeCat]||[]).forEach(h=>{const el=document.createElement('div');el.className='hd';el.dataset.id=h.id;el.setAttribute('role','slider');el.setAttribute('aria-label',h.id);handleLayer.appendChild(el);handleEls[h.id]=el;attachDrag(el,h);});}
+function updateHandles(){
+  const defs=HANDLE_DEFS[activeCat]||[];if(!defs.length||compareBase)return;
+  const w=stage.clientWidth,h=stage.clientHeight;const facing=Math.abs(rig.rotation.y)<0.55&&Math.abs(rig.rotation.x)<0.35;
+  charGroup.updateMatrixWorld(true);
+  defs.forEach(d=>{const el=handleEls[d.id];if(!el)return;if(!facing){el.hidden=true;return;}el.hidden=false;const v=anchorFor(d).applyMatrix4(charGroup.matrixWorld).project(camera);el.style.left=((v.x+1)/2*w)+'px';el.style.top=((1-v.y)/2*h)+'px';});
+  $('#hint').textContent=facing?'拖曳金色控制點直接調整；拖曳空白處轉動角色，滾輪縮放':'轉回正面（按「正面」）即可再用控制點拖曳';
+}
+function pxPerUnit(){const t=camTarget();return stage.clientHeight/(2*(t.d/zoom)*Math.tan(camera.fov*Math.PI/360));}
+function attachDrag(el,h){
+  let d=null;
+  el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();d={x:e.clientX,y:e.clientY,start:{}};h.maps.forEach(m=>d.start[m.k]=P[m.k]);el.setPointerCapture(e.pointerId);});
+  el.addEventListener('pointermove',e=>{if(!d)return;const ppu=pxPerUnit();const dx=(e.clientX-d.x)/ppu,dy=(e.clientY-d.y)/ppu;
+    h.maps.forEach(m=>{const dd=m.axis==='x'?dx:dy;P[m.k]=clamp(Math.round(d.start[m.k]+dd/m.range*100*m.sign),0,100);});currentPreset=-1;refreshValues();applyAll(P);});
+  const end=()=>{if(!d)return;d=null;commit();};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+
+/* ---------------- encode / decode / history ---------------- */
+function encode(o){o=o||P;const v=KEYS.map(k=>COLOR_KEYS.includes(k)?String(o[k]).replace('#',''):String(o[k]));try{return 'WD3.'+btoa(v.join(','));}catch(e){return '';}}
+function decode(str){str=(str||'').trim();if(!str.startsWith('WD3.'))return null;let raw;try{raw=atob(str.slice(4));}catch(e){return null;}const parts=raw.split(',');if(parts.length!==KEYS.length)return null;const o=Object.assign({},DEFAULTS);
+  for(let i=0;i<KEYS.length;i++){const k=KEYS[i],v=parts[i];if(COLOR_KEYS.includes(k)){if(!/^[0-9a-fA-F]{6}$/.test(v))return null;o[k]='#'+v.toLowerCase();}else{const n=parseInt(v,10);if(isNaN(n))return null;o[k]=clamp(n,0,CHOICE_MAX[k]!==undefined?CHOICE_MAX[k]:100);}}return o;}
+const hist={u:[],r:[]};let lastCommitted='';
+function commit(){const c=encode();if(c===lastCommitted)return;hist.u.push(lastCommitted);if(hist.u.length>60)hist.u.shift();hist.r.length=0;lastCommitted=c;refreshHistBtns();persist();}
+function undo(){if(!hist.u.length)return;hist.r.push(lastCommitted);const c=hist.u.pop();P=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function redo(){if(!hist.r.length)return;hist.u.push(lastCommitted);const c=hist.r.pop();P=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function refreshHistBtns(){$('#btnUndo').disabled=!hist.u.length;$('#btnRedo').disabled=!hist.r.length;}
+function persist(){try{localStorage.setItem('wd3_last',encode());localStorage.setItem('wd3_preset',String(currentPreset));}catch(e){}}
+
+/* ---------------- panel UI ---------------- */
+function buildRail(){const rail=$('#rail');CATS.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='cat';b.setAttribute('role','tab');b.id='cat-'+c.id;b.innerHTML=`<span class="g">${c.g}</span><span class="n">${c.name}</span>`;b.setAttribute('aria-selected',c.id===activeCat?'true':'false');b.addEventListener('click',()=>{activeCat=c.id;refreshRail();buildPanel();buildHandles();try{localStorage.setItem('wd3_cat',activeCat);}catch(e){}});rail.appendChild(b);});}
+function refreshRail(){CATS.forEach(c=>$('#cat-'+c.id).setAttribute('aria-selected',c.id===activeCat?'true':'false'));}
+function onChange(k,val,live){P[k]=val;currentPreset=-1;if(k==='light'){applyLight(P);}else applyAll(P);if(!live)commit();}
+function buildPanel(){
+  const cat=CATS.find(c=>c.id===activeCat);$('#panelTitle').textContent=cat.name;$('#panelNote').textContent=cat.note||'';
+  const body=$('#panelBody');body.innerHTML='';
+  cat.controls.forEach(c=>{
+    if(c.t==='group'){const g=document.createElement('div');g.className='gt';g.textContent=c.n;body.appendChild(g);return;}
+    const wrap=document.createElement('div');wrap.className='ctl';const lab=document.createElement('div');lab.className='lab';const nm=document.createElement('b');nm.textContent=c.n;lab.appendChild(nm);
+    if(c.t==='slider'){const v=document.createElement('span');v.className='v';v.id='v-'+c.k;lab.appendChild(v);wrap.appendChild(lab);const inp=document.createElement('input');inp.type='range';inp.min=0;inp.max=100;inp.id='in-'+c.k;inp.setAttribute('aria-label',c.n);inp.addEventListener('input',()=>{v.textContent=inp.value;onChange(c.k,+inp.value,true);});inp.addEventListener('change',commit);wrap.appendChild(inp);}
+    else if(c.t==='choice'){wrap.appendChild(lab);const ch=document.createElement('div');ch.className='choices';c.o.forEach((name,i)=>{const bt=document.createElement('button');bt.type='button';bt.className='chip';bt.textContent=name;bt.id=`ch-${c.k}-${i}`;bt.addEventListener('click',()=>{onChange(c.k,i,false);refreshValues();});ch.appendChild(bt);});wrap.appendChild(ch);}
+    else if(c.t==='color'){wrap.appendChild(lab);const row=document.createElement('div');row.className='colors';c.sw.forEach((hex,i)=>{const sw=document.createElement('button');sw.type='button';sw.className='sw';sw.id=`co-${c.k}-${i}`;sw.setAttribute('aria-label',c.n+' '+hex);sw.innerHTML=`<span style="background:${hex}"></span>`;sw.addEventListener('click',()=>{onChange(c.k,hex,false);refreshValues();});row.appendChild(sw);});const ci=document.createElement('input');ci.type='color';ci.id='in-'+c.k;ci.setAttribute('aria-label',c.n+' 自訂');ci.addEventListener('input',()=>{onChange(c.k,ci.value,true);refreshValues();});ci.addEventListener('change',commit);row.appendChild(ci);wrap.appendChild(row);}
+    body.appendChild(wrap);
+  });
+  refreshValues();
+}
+function refreshValues(){const cat=CATS.find(c=>c.id===activeCat);cat.controls.forEach(c=>{if(c.t==='slider'){const el=$('#in-'+c.k);if(el){el.value=P[c.k];$('#v-'+c.k).textContent=P[c.k];}}else if(c.t==='choice'){c.o.forEach((_,i)=>{const el=$(`#ch-${c.k}-${i}`);if(el)el.setAttribute('aria-pressed',P[c.k]===i?'true':'false');});}else if(c.t==='color'){c.sw.forEach((hex,i)=>{const el=$(`#co-${c.k}-${i}`);if(el)el.setAttribute('aria-pressed',P[c.k]===hex?'true':'false');});const el=$('#in-'+c.k);if(el)el.value=P[c.k];}});
+  $('#btnLight').textContent='光照：'+['左前','正面','右前'][P.light];
+  const pr=PRESETS[currentPreset];$('#metaName').textContent=(pr?pr.name:'自訂臉譜')+' · '+ROBES[P.robe][0]+' · '+AURAS[P.aura][0]+'靈根';}
+function refreshAll(){buildPanel();applyAll(P);buildHandles();}
+function toast(msg,el){const t=$(el||'#toast');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(()=>{t.textContent='';},2600);}
+
+/* gallery with rendered thumbnails */
+function snapshot(o){const keep=P;P=o;applyAll(o);const t=camTarget();const saveYaw=rig.rotation.y,saveX=rig.rotation.x;rig.rotation.set(0,-0.25,0);camera.position.set(0,0.15,7.4);camera.lookAt(0,0.05,0);renderer.render(scene,camera);const url=renderer.domElement.toDataURL('image/jpeg',0.8);rig.rotation.set(saveX,saveYaw,0);P=keep;applyAll(keep);return url;}
+function loadSaved(){try{return JSON.parse(localStorage.getItem('wd3_saved')||'[]');}catch(e){return [];}}
+function openGallery(){
+  const gp=$('#galPresets');gp.innerHTML='';
+  PRESETS.forEach((p,i)=>{const b=document.createElement('button');b.type='button';b.className='thumb';const img=document.createElement('img');img.alt=p.name;img.src=snapshot(fromPreset(i));b.appendChild(img);b.insertAdjacentHTML('beforeend',`<span class="t">${p.name}</span><span class="s">${p.info}</span>`);b.addEventListener('click',()=>{P=fromPreset(i);currentPreset=i;refreshAll();commit();closeOv('#ovGallery');toast(`已套用「${p.name}」`);});gp.appendChild(b);});
+  const saved=loadSaved();const gs=$('#galSaved');gs.innerHTML='';$('#galEmpty').hidden=saved.length>0;
+  saved.forEach((it,i)=>{const o=decode(it.code);if(!o)return;const b=document.createElement('div');b.className='thumb';b.tabIndex=0;b.setAttribute('role','button');const img=document.createElement('img');img.alt=it.name;img.src=it.img||snapshot(o);b.appendChild(img);b.insertAdjacentHTML('beforeend',`<span class="t">${it.name}</span><span class="s">${it.date}</span>`);
+    const load=()=>{P=o;currentPreset=-1;refreshAll();commit();closeOv('#ovGallery');toast(`已載入「${it.name}」`);};b.addEventListener('click',load);b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();load();}});
+    const del=document.createElement('button');del.type='button';del.className='chip';del.textContent='刪除';del.addEventListener('click',ev=>{ev.stopPropagation();const arr=loadSaved();arr.splice(i,1);try{localStorage.setItem('wd3_saved',JSON.stringify(arr));}catch(e){}openGallery();});b.appendChild(del);gs.appendChild(b);});
+  $('#ovGallery').hidden=false;
+}
+function closeOv(sel){$(sel).hidden=true;}
+function saveFace(){const arr=loadSaved();const d=new Date();arr.unshift({name:'臉譜 '+(arr.length+1),code:encode(),img:snapshot(Object.assign({},P)),date:`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`});if(arr.length>8)arr.length=8;try{localStorage.setItem('wd3_saved',JSON.stringify(arr));toast('已存入臉譜庫（這個瀏覽器）');}catch(e){toast('這個瀏覽器不允許儲存，請改用分享數據');}}
+function openShare(){const code=encode();$('#codeOut').value=code;const box=$('#qr');box.innerHTML='';try{if(window.QRCode){new QRCode(box,{text:code,width:152,height:152,colorDark:'#1d2530',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});}else box.textContent='二維碼元件未載入，請用文字數據。';}catch(e){box.textContent='數據過長，請用文字數據。';}$('#ovShare').hidden=false;}
+
+/* random */
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];const rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
+function randomKey(k){if(COLOR_KEYS.includes(k))return k==='skin'?pick(SKINS):k==='iris'?pick(IRISES):pick(HAIRS);if(k==='light')return P.light;if(CHOICE_MAX[k]!==undefined)return rnd(0,CHOICE_MAX[k]);return rnd(15,85);}
+function randomize(keys){keys.forEach(k=>{P[k]=randomKey(k);});if(keys.includes('scar')&&Math.random()<0.6)P.scar=0;if(keys.includes('beard')&&Math.random()<0.6)P.beard=0;if(keys.includes('faling')&&Math.random()<0.6)P.faling=0;if(keys.includes('longHair')&&P.longHair===0)P.flow=0;currentPreset=-1;refreshAll();commit();}
+function catKeys(id){return CATS.find(c=>c.id===id).controls.filter(c=>c.k).map(c=>c.k);}
+
+/* wire */
+buildRail();
+$('#btnLight').addEventListener('click',()=>{P.light=(P.light+1)%3;applyLight(P);refreshValues();commit();});
+const setView=(v)=>{view=v;yaw=VIEWS[v];pitch=0;['vFront','vQuarter','vSide'].forEach(id=>$('#'+id).setAttribute('aria-pressed',String(({vFront:'front',vQuarter:'quarter',vSide:'side'})[id]===v)));};
+$('#vFront').addEventListener('click',()=>setView('front'));$('#vQuarter').addEventListener('click',()=>setView('quarter'));$('#vSide').addEventListener('click',()=>setView('side'));
+$('#camFace').addEventListener('click',()=>{cam='face';$('#camFace').setAttribute('aria-pressed','true');$('#camBody').setAttribute('aria-pressed','false');});
+$('#camBody').addEventListener('click',()=>{cam='body';$('#camFace').setAttribute('aria-pressed','false');$('#camBody').setAttribute('aria-pressed','true');});
+const cmp=$('#btnCompare');
+const cmpOn=()=>{const base=currentPreset>=0?fromPreset(currentPreset):(hist.u.length?decode(hist.u[0]):null);if(!base){toast('目前沒有可對比的原貌');return;}compareBase=base;cmp.setAttribute('aria-pressed','true');applyAll(base);handleLayer.hidden=true;};
+const cmpOff=()=>{if(!compareBase)return;compareBase=null;cmp.setAttribute('aria-pressed','false');applyAll(P);handleLayer.hidden=false;};
+cmp.addEventListener('pointerdown',e=>{e.preventDefault();cmpOn();});cmp.addEventListener('pointerup',cmpOff);cmp.addEventListener('pointerleave',cmpOff);cmp.addEventListener('pointercancel',cmpOff);
+cmp.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();cmpOn();}});cmp.addEventListener('keyup',cmpOff);
+$('#btnUndo').addEventListener('click',undo);$('#btnRedo').addEventListener('click',redo);
+$('#btnRandCat').addEventListener('click',()=>{randomize(catKeys(activeCat));toast('隨機了「'+CATS.find(c=>c.id===activeCat).name+'」');});
+$('#btnRandAll').addEventListener('click',()=>{randomize(KEYS.filter(k=>k!=='light'));toast('隨機捏了一張臉');});
+$('#btnReset').addEventListener('click',()=>{const base=currentPreset>=0?fromPreset(currentPreset):fromPreset(0);catKeys(activeCat).forEach(k=>{P[k]=base[k];});refreshAll();commit();toast('已重置本區');});
+$('#btnGallery').addEventListener('click',openGallery);$('#galClose').addEventListener('click',()=>closeOv('#ovGallery'));
+$('#btnSave').addEventListener('click',saveFace);$('#btnShare').addEventListener('click',openShare);$('#shClose').addEventListener('click',()=>closeOv('#ovShare'));
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.hidden=true;}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.hidden=true);}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();}});
+$('#btnCopy').addEventListener('click',()=>{const ta=$('#codeOut');const txt=ta.value;const fb=()=>{ta.focus();ta.select();toast('已選取數據，請按複製','#toast2');};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('數據已複製','#toast2')).catch(fb);}else fb();});
+$('#btnImport').addEventListener('click',()=>{const o=decode($('#codeIn').value);if(o){P=o;currentPreset=-1;refreshAll();commit();closeOv('#ovShare');toast('數據已載入');}else toast('數據格式不對，請確認以 WD3. 開頭且完整','#toast2');});
+
+/* boot */
+function start(data){
+  let loaded=false;
+  if(data&&data.code){const o=decode(data.code);if(o){P=o;currentPreset=typeof data.preset==='number'?data.preset:-1;loaded=true;}}
+  if(!loaded){try{const c=localStorage.getItem('wd3_last');const o=c&&decode(c);if(o){P=o;const pi=parseInt(localStorage.getItem('wd3_preset')||'-1',10);currentPreset=isNaN(pi)?-1:pi;loaded=true;}const t=localStorage.getItem('wd3_cat');if(t&&CATS.some(x=>x.id===t)){activeCat=t;refreshRail();}}catch(e){}}
+  if(!loaded){P=fromPreset(0);currentPreset=0;}
+  lastCommitted=encode();resize();refreshAll();refreshHistBtns();yaw=VIEWS.front;
+  if(renderer)frame();
+}
+try{window.claude?.hot?.snapshot?.(()=>({code:encode(),preset:currentPreset}));}catch(e){}
+if(window.claude?.hot?.ready){window.claude.hot.ready(start);}else{start(window.claude?.hot?.data??{});}
+})();
+</script>
