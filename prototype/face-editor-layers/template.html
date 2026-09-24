@@ -1,0 +1,409 @@
+<title>問道棋局換裝捏臉</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    color-scheme:dark;
+    --bg:#111418; --bg-2:#181c22; --glass:rgba(20,24,30,.84); --glass-2:rgba(28,33,41,.92);
+    --line:rgba(201,162,74,.28); --line-2:rgba(255,255,255,.08);
+    --ink:#ece6d8; --ink-2:#9aa3ad; --ink-3:#6b737d;
+    --gold:#c9a24a; --gold-2:#e8cd85; --ice:#7fd4f5;
+    --serif:"Noto Serif TC","Songti TC","PMingLiU",serif;
+    --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.5;overflow:hidden}
+  .app{height:100%;display:grid;grid-template-rows:auto 1fr auto;padding-inline:16px;padding-block:10px;gap:10px}
+  .top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .title{font-family:var(--serif);font-weight:700;font-size:20px;letter-spacing:.08em;white-space:nowrap}
+  .title small{font-family:var(--sans);font-weight:400;font-size:11px;color:var(--ink-3);letter-spacing:.2em;margin-left:8px}
+  .name{font-family:var(--serif);color:var(--gold-2);font-size:14px;letter-spacing:.1em;border-left:1px solid var(--line);padding-left:14px}
+  .spacer{flex:1}
+  .tools{display:flex;gap:6px;flex-wrap:wrap}
+  .tb{border:1px solid var(--line-2);background:var(--glass);color:var(--ink);border-radius:3px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;letter-spacing:.06em;white-space:nowrap}
+  .tb:hover{border-color:var(--gold)}
+  .tb[aria-pressed="true"]{border-color:var(--gold);color:var(--gold-2);background:rgba(201,162,74,.12)}
+  .tb.gold{background:var(--gold);color:#1a1408;border-color:var(--gold);font-weight:700}
+  .tb:disabled{opacity:.4;cursor:default}
+  .tb:focus-visible,.cat:focus-visible,.opt:focus-visible,.sw:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+  .main{display:grid;grid-template-columns:76px minmax(300px,1fr) minmax(300px,400px);gap:12px;min-height:0}
+  .rail{display:flex;flex-direction:column;gap:3px;overflow-y:auto;scrollbar-width:none;padding-block:2px}
+  .cat{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;background:transparent;color:var(--ink-2);padding:4px 4px;border-radius:4px;cursor:pointer;font:inherit}
+  .cat .g{width:30px;height:30px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--serif);font-size:14px;font-weight:600;color:var(--ink)}
+  .cat .n{font-size:10.5px;letter-spacing:.08em}
+  .cat:hover .g{border-color:var(--gold)}
+  .cat[aria-selected="true"]{color:var(--gold-2)}
+  .cat[aria-selected="true"] .g{border-color:var(--gold);background:rgba(201,162,74,.14);color:var(--gold-2)}
+  .stage{position:relative;min-height:0;display:grid;place-items:center;border:1px solid var(--line-2);border-radius:4px;background:radial-gradient(ellipse at 50% 40%,#232a33 0%,#151a20 70%);overflow:hidden}
+  .stage canvas{display:block;max-height:100%;max-width:100%;width:auto;height:100%;aspect-ratio:1200/1520;border-radius:3px}
+  .stage .cam{position:absolute;right:10px;top:10px;display:flex;gap:4px}
+  .stage .cam .tb{padding:4px 9px}
+  .stage .drop{position:absolute;inset:0;display:grid;place-items:center;background:rgba(201,162,74,.18);border:2px dashed var(--gold);color:var(--gold-2);font-family:var(--serif);font-size:18px;letter-spacing:.2em;pointer-events:none}
+  .stage .drop[hidden]{display:none}
+  .panel{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line-2);border-radius:4px;background:var(--glass)}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--line-2)}
+  .panel .head h2{margin:0;font-family:var(--serif);font-size:15px;letter-spacing:.14em;color:var(--gold-2);font-weight:600}
+  .body{overflow-y:auto;padding:12px 14px 16px;display:grid;gap:12px;scrollbar-width:thin;align-content:start}
+  .gt{font-family:var(--serif);font-size:12px;letter-spacing:.2em;color:var(--ink-3);padding-top:8px;border-top:1px dashed var(--line-2);margin-bottom:-4px}
+  .gt:first-child{border-top:0;padding-top:0}
+  .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+  .opt{border:1px solid var(--line-2);background:#0f1216;border-radius:4px;padding:4px 4px 5px;cursor:pointer;display:grid;gap:3px;color:var(--ink);font:inherit;text-align:center}
+  .opt:hover{border-color:var(--gold)}
+  .opt[aria-pressed="true"]{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset;background:rgba(201,162,74,.08)}
+  .opt canvas,.opt img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:3px;background:#e9eef4;display:block}
+  .opt .n{font-size:11px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .opt .tag{font-size:9px;color:var(--gold-2);letter-spacing:.1em}
+  .ctl{display:grid;gap:4px}
+  .ctl .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px}
+  .ctl .lab .v{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:11px}
+  input[type=range]{width:100%;accent-color:var(--gold);margin:0;height:22px}
+  .colors{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid var(--line-2);cursor:pointer;padding:0;background:none}
+  .sw[aria-pressed="true"]{border-color:var(--gold-2);box-shadow:0 0 0 2px var(--bg-2),0 0 0 3px var(--gold)}
+  .sw span{display:block;width:100%;height:100%;border-radius:50%}
+  input[type=color]{width:32px;height:26px;border:1px solid var(--line-2);border-radius:3px;background:var(--bg-2);padding:2px;cursor:pointer}
+  .lab{font-size:12px;letter-spacing:.04em}
+  .bottom{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:space-between}
+  .bottom .grp{display:flex;gap:6px;flex-wrap:wrap}
+  .overlay{position:fixed;inset:0;background:rgba(8,10,13,.72);display:grid;place-items:center;padding:16px;z-index:10}
+  .overlay[hidden]{display:none}
+  .sheet{width:min(860px,100%);max-height:90vh;overflow:auto;background:var(--glass-2);border:1px solid var(--line);border-radius:6px;padding:16px 18px 20px;display:grid;gap:14px}
+  .sheet h3{margin:0;font-family:var(--serif);font-size:16px;letter-spacing:.16em;color:var(--gold-2);display:flex;justify-content:space-between;align-items:center}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+  .thumb{border:1px solid var(--line-2);background:#0f1216;border-radius:4px;padding:6px;cursor:pointer;display:grid;gap:4px;text-align:center;color:var(--ink);font:inherit}
+  .thumb:hover{border-color:var(--gold)}
+  .thumb img{width:100%;height:auto;border-radius:3px;background:#dfe6ee;aspect-ratio:1/1;object-fit:cover}
+  .thumb .t{font-family:var(--serif);font-size:12px;letter-spacing:.08em}
+  .thumb .s{font-size:10px;color:var(--ink-3)}
+  .share{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+  #qr{width:168px;height:168px;background:#fff;padding:8px;border-radius:4px;color:#1d2530;font-size:11px}
+  #qr img,#qr canvas{display:block;width:152px;height:152px}
+  textarea{width:100%;min-height:64px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;border:1px solid var(--line-2);border-radius:3px;background:#0f1216;color:var(--ink);padding:8px}
+  select{font:inherit;font-size:11px;background:#0f1216;color:var(--ink);border:1px solid var(--line-2);border-radius:3px;padding:2px 4px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .toast{font-size:12px;color:var(--gold-2);min-height:1.2em;letter-spacing:.04em}
+  .muted{font-size:11px;color:var(--ink-3);margin:0;line-height:1.6}
+  .assetrow{display:flex;align-items:center;gap:6px;font-size:11px;border-bottom:1px solid var(--line-2);padding:3px 0}
+  .assetrow img{width:28px;height:28px;object-fit:cover;background:#e9eef4;border-radius:3px}
+  .assetrow .fn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dz{border:1px dashed var(--line);border-radius:4px;padding:14px;text-align:center;color:var(--ink-2);font-size:12px}
+  @media (max-width:900px){
+    body{overflow:auto}
+    .app{height:auto}
+    .main{grid-template-columns:1fr;grid-template-rows:auto minmax(50vh,58vh) auto}
+    .rail{flex-direction:row;overflow-x:auto;overflow-y:hidden}
+    .cat{flex:0 0 auto;padding:6px 8px}
+    .panel{max-height:62vh}
+    .share{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:no-preference){.tb,.opt,.cat .g,.thumb{transition:border-color .15s,background-color .15s,color .15s}}
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="title">問道棋局 · 換裝捏臉<small>原型 v0.6 · 2D 圖層合成</small></div>
+    <div class="name" id="metaName">青雲劍修</div>
+    <div class="spacer"></div>
+    <div class="tools">
+      <button class="tb" id="btnGallery" type="button">臉譜庫</button>
+      <button class="tb" id="btnCompare" type="button">按住對比原貌</button>
+      <button class="tb" id="btnExport" type="button">匯出 PNG</button>
+    </div>
+  </div>
+  <div class="main">
+    <nav class="rail" id="rail" role="tablist" aria-label="部位"></nav>
+    <section class="stage" id="stage" aria-label="角色預覽">
+      <canvas id="cv" width="1200" height="1520"></canvas>
+      <div class="cam">
+        <button class="tb" id="camFace" type="button" aria-pressed="true">臉部</button>
+        <button class="tb" id="camBody" type="button" aria-pressed="false">半身</button>
+      </div>
+      <div class="drop" id="drop" hidden>放開以匯入 PNG 配件</div>
+    </section>
+    <aside class="panel" aria-label="款式與微調">
+      <div class="head"><h2 id="panelTitle">前髮</h2><span class="muted" id="panelNote"></span></div>
+      <div class="body" id="panelBody"></div>
+    </aside>
+  </div>
+  <div class="bottom">
+    <div class="grp">
+      <button class="tb" id="btnUndo" type="button" disabled>撤銷</button>
+      <button class="tb" id="btnRedo" type="button" disabled>重做</button>
+      <button class="tb" id="btnRandCat" type="button">隨機本部位</button>
+      <button class="tb" id="btnRandAll" type="button">隨機全臉</button>
+      <button class="tb" id="btnResetTf" type="button">重置本層微調</button>
+    </div>
+    <span class="toast" id="toast" aria-live="polite"></span>
+    <div class="grp">
+      <button class="tb" id="btnSave" type="button">存入臉譜庫</button>
+      <button class="tb gold" id="btnShare" type="button">分享捏臉數據</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="ovGallery" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="galTitle">
+    <h3 id="galTitle">臉譜庫 <button class="tb" id="galClose" type="button">關閉</button></h3>
+    <div class="gt">宗門預設</div>
+    <div class="grid" id="galPresets"></div>
+    <div class="gt">我的臉譜（存在這個瀏覽器）</div>
+    <div class="grid" id="galSaved"></div>
+    <p class="muted" id="galEmpty">還沒有存過臉譜。湊好後按「存入臉譜庫」。</p>
+  </div>
+</div>
+<div class="overlay" id="ovShare" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="shTitle">
+    <h3 id="shTitle">分享捏臉數據 <button class="tb" id="shClose" type="button">關閉</button></h3>
+    <div class="share">
+      <div id="qr" aria-label="捏臉數據二維碼"></div>
+      <div style="display:grid;gap:8px">
+        <label class="muted" for="codeOut">捏臉數據（含各層款式與微調；引用匯入素材時以檔名記錄）</label>
+        <textarea id="codeOut" readonly></textarea>
+        <div class="row"><button class="tb" id="btnCopy" type="button">複製數據</button><span class="toast" id="toast2" aria-live="polite"></span></div>
+        <label class="muted" for="codeIn">貼上數據載入</label>
+        <textarea id="codeIn" placeholder="WD6.…"></textarea>
+        <div class="row"><button class="tb" id="btnImport" type="button">載入數據</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="ovExport" hidden>
+  <div class="sheet" role="dialog" aria-labelledby="exTitle">
+    <h3 id="exTitle">匯出 PNG <button class="tb" id="exClose" type="button">關閉</button></h3>
+    <p class="muted">在下方圖片上按右鍵「另存圖片」，或長按儲存。合成尺寸 1200×1520。</p>
+    <img id="exImg" alt="合成結果" style="max-width:100%;border-radius:4px;background:#e9eef4">
+  </div>
+</div>
+
+<script>
+__RENDERER__
+</script>
+<script>
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const BW=1200,BH=1520,SC=2; // canvas = base 600x760 × 2
+const LAYERS=['bg','hairBack','body','face','eyes','brows','nose','mouth','extra','mark','hairFront','pin','fx'];
+const CATS=[
+  {id:'hairFront',g:'瀏',name:'前髮',pk:'bangs',names:BANGS,box:[300,250,340],tf:['x','y','s']},
+  {id:'hairBack',g:'髮',name:'後髮',pk:'back',names:BACKS,box:[300,420,480],tf:['x','y','s']},
+  {id:'eyes',g:'眼',name:'眼睛',pk:'eye',names:EYES,box:[300,338,220],tf:['x','y','s','r','gap']},
+  {id:'brows',g:'眉',name:'眉毛',pk:'brow',names:BROWS,box:[300,296,200],tf:['x','y','s','r','gap']},
+  {id:'nose',g:'鼻',name:'鼻子',pk:'nose',names:NOSES,box:[300,378,70],tf:['x','y','s','r']},
+  {id:'mouth',g:'嘴',name:'嘴巴',pk:'mouth',names:MOUTHS,box:[300,436,90],tf:['x','y','s','r']},
+  {id:'face',g:'臉',name:'臉型',pk:'face',names:FACES,box:[300,340,260],tf:['x','y','s']},
+  {id:'pin',g:'簪',name:'髮飾',pk:'pin',names:PINS,box:[300,150,220],tf:['x','y','s','r']},
+  {id:'mark',g:'紋',name:'紋飾',pk:'mark',names:MARKS,box:[300,300,120],tf:['x','y','s','r']},
+  {id:'extra',g:'鬚',name:'鬚與斑',pk:'extra',names:EXTRA,box:[300,440,200],tf:['x','y','s']},
+  {id:'body',g:'衣',name:'服飾',pk:'robe',names:ROBES.map(r=>r[0]),box:[300,640,600],tf:['x','y','s'],also:[{k:'aura',n:'靈根氣息',o:AURAS.map(a=>a[0])},{k:'halo',n:'境界光效',o:['無','金丹光環']}]},
+  {id:'color',g:'色',name:'顏色',color:true},
+  {id:'assets',g:'材',name:'素材',assets:true}
+];
+const TF0={x:0,y:0,s:1,r:0,gap:0};
+const DEF={parts:{},tf:{},skin:'#f6e8dc',hair:'#f1f3f6',iris:'#6fc3e6',robe:0,aura:6,halo:1};
+const PRESET_PARTS=[
+  {name:'青雲劍修',info:'青雲宗 · 冰靈根',p:{face:0,brow:0,eye:0,nose:0,mouth:0,bangs:0,back:0,pin:1,mark:0,extra:0,skin:'#f6e8dc',hair:'#f1f3f6',iris:'#6fc3e6',robe:0,aura:6,halo:1}},
+  {name:'神農谷丹修',info:'神農谷 · 木靈根',p:{face:1,brow:1,eye:2,nose:1,mouth:1,bangs:5,back:4,pin:2,mark:0,extra:4,skin:'#f2dcc9',hair:'#3a2c26',iris:'#5a8a4a',robe:1,aura:1,halo:0}},
+  {name:'大雷音寺僧',info:'大雷音寺 · 土靈根',p:{face:3,brow:2,eye:7,nose:3,mouth:2,bangs:7,back:5,pin:0,mark:2,extra:0,skin:'#ecd0b6',hair:'#1f1c22',iris:'#4a3c32',robe:2,aura:4,halo:1}},
+  {name:'血河宗魔修',info:'血河宗 · 火靈根',p:{face:5,brow:4,eye:3,nose:2,mouth:3,bangs:6,back:2,pin:0,mark:6,extra:0,skin:'#f2dcc9',hair:'#1f1c22',iris:'#c43a3a',robe:3,aura:3,halo:0}},
+  {name:'萬妖山妖修',info:'萬妖山 · 雷靈根',p:{face:2,brow:3,eye:5,nose:0,mouth:5,bangs:4,back:1,pin:4,mark:5,extra:5,skin:'#dcb693',hair:'#6b3f2a',iris:'#e0a030',robe:4,aura:5,halo:0}},
+  {name:'逍遙居散修',info:'逍遙居 · 水靈根',p:{face:3,brow:3,eye:4,nose:4,mouth:1,bangs:1,back:3,pin:0,mark:0,extra:3,skin:'#ecd0b6',hair:'#8a8f99',iris:'#3d6fb8',robe:5,aura:2,halo:0}}
+];
+const PK2LAYER={bangs:'hairFront',back:'hairBack',eye:'eyes',brow:'brows',nose:'nose',mouth:'mouth',face:'face',pin:'pin',mark:'mark',extra:'extra',robe:'body'};
+function fromPreset(i){const p=PRESET_PARTS[i].p;const S={parts:{},tf:{},skin:p.skin,hair:p.hair,iris:p.iris,robe:p.robe,aura:p.aura,halo:p.halo};for(const pk in PK2LAYER){S.parts[PK2LAYER[pk]]={src:'b',id:p[pk]};}return S;}
+function clone(o){return JSON.parse(JSON.stringify(o));}
+let S=fromPreset(0),currentPreset=0,activeCat='hairFront',cam='face',compareBase=null;
+
+/* ---------- built-in asset rasterisation (from the vector part library) ---------- */
+function paramsFor(S,layer,id){
+  const P={face:0,brow:0,eye:0,nose:0,mouth:0,bangs:0,back:0,pin:0,mark:0,extra:0,skin:S.skin,hair:S.hair,iris:S.iris,robe:S.robe,aura:S.aura,halo:S.halo};
+  for(const pk in PK2LAYER){const l=PK2LAYER[pk];const part=S.parts[l];P[pk]=(part&&part.src==='b')?part.id:0;}
+  if(layer==='hairFront'){P.bangs=id;P.pin=0;}
+  else if(layer==='pin'){P.pin=id;}
+  else{for(const pk in PK2LAYER)if(PK2LAYER[pk]===layer)P[pk]=id;}
+  // bald consistency
+  if(layer==='hairFront'&&id===7)P.back=5;
+  if((layer==='hairBack'||layer==='pin')&&P.back===5&&layer==='hairBack'&&id!==5){P.bangs=P.bangs===7?0:P.bangs;}
+  if(layer==='hairBack'&&id===5)P.bangs=7;
+  return P;
+}
+const cache=new Map();
+function rasterize(svgInner){return new Promise(res=>{const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=BW;c.height=BH;c.getContext('2d').drawImage(img,0,0,BW,BH);res(c);};img.onerror=()=>res(null);img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 760" width="${BW}" height="${BH}">${svgInner}</svg>`);});}
+function keyFor(S,layer,id){const P=paramsFor(S,layer,id);const dep={hairFront:['bangs','back','hair'],hairBack:['back','hair'],pin:['pin','back'],eyes:['eye','iris','skin'],brows:['brow','hair'],nose:['nose','skin'],mouth:['mouth','skin'],face:['face','skin'],mark:['mark'],extra:['extra','hair','skin'],body:['robe'],bg:['aura','halo'],fx:['aura']}[layer]||[];return layer+'|'+dep.map(k=>P[k]).join('|');}
+async function builtin(S,layer,id){const k=keyFor(S,layer,id);if(cache.has(k))return cache.get(k);const p=rasterize(renderLayers(paramsFor(S,layer,id),new Set([layer])));cache.set(k,p);const c=await p;cache.set(k,c);return c;}
+
+/* ---------- user assets (IndexedDB) ---------- */
+const userAssets=[]; // {name,layer,blob,img}
+function dbOpen(){return new Promise((res,rej)=>{const r=indexedDB.open('wd6',1);r.onupgradeneeded=()=>{r.result.createObjectStore('assets',{keyPath:'name'});};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function dbAll(){try{const db=await dbOpen();return await new Promise((res,rej)=>{const t=db.transaction('assets','readonly').objectStore('assets').getAll();t.onsuccess=()=>res(t.result||[]);t.onerror=()=>rej(t.error);});}catch(e){return [];}}
+async function dbPut(rec){try{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction('assets','readwrite');t.objectStore('assets').put(rec);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}}
+async function dbDel(name){try{const db=await dbOpen();await new Promise((res,rej)=>{const t=db.transaction('assets','readwrite');t.objectStore('assets').delete(name);t.oncomplete=res;t.onerror=()=>rej(t.error);});}catch(e){}}
+function guessLayer(name){const n=name.toLowerCase();const rules=[[/hairfront|bangs|fringe|前髮|瀏海|刘海/,'hairFront'],[/hairback|hair_back|backhair|後髮|后发|髮型|发型|^hair/,'hairBack'],[/eyes?[_\-\d]|眼/,'eyes'],[/brow|眉/,'brows'],[/nose|鼻/,'nose'],[/mouth|lip|嘴|唇/,'mouth'],[/face|head|臉|脸/,'face'],[/pin|crown|band|髮飾|发饰|簪|冠/,'pin'],[/mark|rune|紋|纹|花鈿|疤/,'mark'],[/beard|freckle|extra|鬍|胡|斑|痣/,'extra'],[/body|robe|cloth|衣|袍/,'body'],[/bg|background|背景/,'bg']];for(const [re,l] of rules)if(re.test(n))return l;return 'hairFront';}
+function loadImg(blob){return new Promise(res=>{const img=new Image();img.onload=()=>res(img);img.onerror=()=>res(null);img.src=URL.createObjectURL(blob);});}
+async function importFiles(files){let n=0;for(const f of files){if(!/image\/(png|webp)/.test(f.type))continue;const img=await loadImg(f);if(!img)continue;const name=f.name.replace(/\.(png|webp)$/i,'');const rec={name,layer:guessLayer(name),blob:f};const i=userAssets.findIndex(a=>a.name===name);const ua=Object.assign({},rec,{img});if(i>=0)userAssets[i]=ua;else userAssets.push(ua);await dbPut(rec);n++;}
+  if(n){toast(`已匯入 ${n} 件素材`);buildPanel();requestRender();}else toast('沒有可用的 PNG，請確認副檔名與格式');}
+async function loadUserAssets(){const recs=await dbAll();for(const r of recs){const img=await loadImg(r.blob);if(img)userAssets.push(Object.assign({},r,{img}));}}
+
+/* ---------- composition ---------- */
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let renderVer=0;
+function tfOf(layer){return Object.assign({},TF0,S.tf[layer]||{});}
+function drawLayer(c,img,layer,tf,user){
+  const cat=CATS.find(x=>x.id===layer);const box=cat?cat.box:[300,380,600];const ax=box[0]*SC,ay=box[1]*SC;
+  const parts=(layer==='eyes'||layer==='brows')&&tf.gap?[[-1,tf.gap*SC/2],[1,-tf.gap*SC/2]]:[[0,0]];
+  for(const [side,shift] of parts){
+    c.save();
+    if(side){c.beginPath();c.rect(side<0?0:BW/2,0,BW/2,BH);c.clip();}
+    c.translate(ax+tf.x*SC-shift,ay+tf.y*SC);c.rotate(tf.r*Math.PI/180);c.scale(tf.s,tf.s);
+    if(user){const w=box[2]*SC;const h=w*img.height/img.width;c.drawImage(img,-w/2,-h/2,w,h);}
+    else c.drawImage(img,-ax,-ay);
+    c.restore();
+  }
+}
+async function compose(target,St,opts){
+  opts=opts||{};const c=target.getContext('2d');
+  const imgs=[];
+  for(const layer of LAYERS){
+    if(opts.skip&&opts.skip.has(layer))continue;
+    let part=St.parts[layer];
+    if(layer==='bg'||layer==='fx')part={src:'b',id:0};
+    if(!part)continue;
+    if(part.src==='u'){const ua=userAssets.find(a=>a.name===part.id);if(ua)imgs.push([layer,ua.img,true]);continue;}
+    const cvs=await builtin(St,layer,part.id);if(cvs)imgs.push([layer,cvs,false]);
+  }
+  return imgs;
+}
+async function requestRender(){
+  const ver=++renderVer;const St=compareBase||S;
+  const imgs=await compose(cv,St);
+  if(ver!==renderVer)return;
+  ctx.clearRect(0,0,BW,BH);ctx.fillStyle='#e9eef4';ctx.fillRect(0,0,BW,BH);
+  for(const [layer,img,user] of imgs)drawLayer(ctx,img,layer,Object.assign({},TF0,St.tf[layer]||{}),user);
+  applyCam();
+  const pr=PRESET_PARTS[currentPreset];$('#metaName').textContent=(pr?pr.name:'自訂臉譜')+' · '+ROBES[S.robe][0]+' · '+AURAS[S.aura][0]+'靈根';
+}
+function applyCam(){cv.style.transformOrigin='50% 44%';cv.style.transform=cam==='face'?'scale(1.7)':'none';}
+
+/* ---------- thumbnails ---------- */
+async function thumbFor(layer,part,St){const t=document.createElement('canvas');t.width=t.height=160;const c=t.getContext('2d');c.fillStyle='#e9eef4';c.fillRect(0,0,160,160);
+  const cat=CATS.find(x=>x.id===layer);const box=cat.box;const span=Math.max(box[2]*1.15,120)*SC;const ax=box[0]*SC,ay=box[1]*SC;
+  // context layers behind for readability
+  const ctxLayers={hairFront:['face'],hairBack:['face'],eyes:['face'],brows:['face'],nose:['face'],mouth:['face'],pin:['hairFront'],mark:['face'],extra:['face'],face:[],body:[]}[layer]||[];
+  const off=document.createElement('canvas');off.width=BW;off.height=BH;const oc=off.getContext('2d');
+  for(const cl of ctxLayers){const p=St.parts[cl];if(!p)continue;if(p.src==='u'){const ua=userAssets.find(a=>a.name===p.id);if(ua)drawLayer(oc,ua.img,cl,tfOf(cl),true);}else{const im=await builtin(St,cl,p.id);if(im){oc.globalAlpha=0.35;drawLayer(oc,im,cl,tfOf(cl),false);oc.globalAlpha=1;}}}
+  if(part.src==='u'){const ua=userAssets.find(a=>a.name===part.id);if(ua)drawLayer(oc,ua.img,layer,TF0,true);}else{const im=await builtin(St,layer,part.id);if(im)drawLayer(oc,im,layer,TF0,false);}
+  c.drawImage(off,ax-span/2,ay-span/2,span,span,0,0,160,160);return t;}
+
+/* ---------- UI ---------- */
+function buildRail(){const rail=$('#rail');rail.innerHTML='';CATS.forEach(c=>{const b=document.createElement('button');b.type='button';b.className='cat';b.setAttribute('role','tab');b.id='cat-'+c.id;b.innerHTML=`<span class="g">${c.g}</span><span class="n">${c.name}</span>`;b.setAttribute('aria-selected',c.id===activeCat?'true':'false');b.addEventListener('click',()=>{activeCat=c.id;refreshRail();buildPanel();try{localStorage.setItem('wd6_cat',activeCat);}catch(e){}});rail.appendChild(b);});}
+function refreshRail(){CATS.forEach(c=>$('#cat-'+c.id).setAttribute('aria-selected',c.id===activeCat?'true':'false'));}
+function slider(k,name,min,max,step,val,on){const w=document.createElement('div');w.className='ctl';w.innerHTML=`<div class="lab"><span>${name}</span><span class="v" id="v-${k}">${val}</span></div>`;const i=document.createElement('input');i.type='range';i.min=min;i.max=max;i.step=step;i.value=val;i.id='tf-'+k;i.addEventListener('input',()=>{$('#v-'+k).textContent=i.value;on(+i.value,true);});i.addEventListener('change',()=>commit());w.appendChild(i);return w;}
+async function buildPanel(){
+  const cat=CATS.find(c=>c.id===activeCat);$('#panelTitle').textContent=cat.name;$('#panelNote').textContent='';const body=$('#panelBody');body.innerHTML='';
+  if(cat.color){body.appendChild(colorRow('skin','膚色',SKINS));body.appendChild(colorRow('hair','髮色',HAIRS));body.appendChild(colorRow('iris','瞳色',IRISES));$('#panelNote').textContent='內建配件即時重新著色';return;}
+  if(cat.assets){buildAssetsPanel(body);return;}
+  const layer=cat.id;const cur=S.parts[layer]||{src:'b',id:0};
+  const grid=document.createElement('div');grid.className='opts';body.appendChild(grid);
+  const opts=[];cat.names.forEach((n,i)=>opts.push({src:'b',id:i,name:n}));userAssets.filter(a=>a.layer===layer).forEach(a=>opts.push({src:'u',id:a.name,name:a.name}));
+  const St=clone(S);
+  for(const o of opts){const b=document.createElement('button');b.type='button';b.className='opt';b.setAttribute('aria-pressed',(cur.src===o.src&&cur.id===o.id)?'true':'false');
+    const ph=document.createElement('canvas');ph.width=ph.height=160;b.appendChild(ph);b.insertAdjacentHTML('beforeend',`<span class="n">${o.name}</span>${o.src==='u'?'<span class="tag">匯入</span>':''}`);
+    b.addEventListener('click',()=>{S.parts[layer]={src:o.src,id:o.id};if(layer==='hairBack'&&o.src==='b'){if(o.id===5)S.parts.hairFront={src:'b',id:7};else if(S.parts.hairFront&&S.parts.hairFront.src==='b'&&S.parts.hairFront.id===7)S.parts.hairFront={src:'b',id:0};}if(layer==='hairFront'&&o.src==='b'){if(o.id===7)S.parts.hairBack={src:'b',id:5};else if(S.parts.hairBack&&S.parts.hairBack.src==='b'&&S.parts.hairBack.id===5)S.parts.hairBack={src:'b',id:2};}currentPreset=-1;requestRender();buildPanel();commit();});
+    grid.appendChild(b);
+    thumbFor(layer,o,St).then(t=>{ph.getContext('2d').drawImage(t,0,0);});
+  }
+  // fine-tune
+  const g=document.createElement('div');g.className='gt';g.textContent='微調';body.appendChild(g);
+  const tf=tfOf(layer);const set=(k,v)=>{S.tf[layer]=Object.assign(tfOf(layer),{[k]:v});currentPreset=-1;requestRender();};
+  if(cat.tf.includes('s'))body.appendChild(slider('s','大小',0.6,1.5,0.01,tf.s,v=>set('s',v)));
+  if(cat.tf.includes('x'))body.appendChild(slider('x','水平位置',-60,60,1,tf.x,v=>set('x',v)));
+  if(cat.tf.includes('y'))body.appendChild(slider('y','垂直位置',-60,60,1,tf.y,v=>set('y',v)));
+  if(cat.tf.includes('r'))body.appendChild(slider('r','角度',-20,20,0.5,tf.r,v=>set('r',v)));
+  if(cat.tf.includes('gap'))body.appendChild(slider('gap','間距',-30,30,1,tf.gap,v=>set('gap',v)));
+  (cat.also||[]).forEach(al=>{const gg=document.createElement('div');gg.className='gt';gg.textContent=al.n;body.appendChild(gg);const row=document.createElement('div');row.className='row';al.o.forEach((name,i)=>{const b=document.createElement('button');b.type='button';b.className='tb';b.textContent=name;b.setAttribute('aria-pressed',S[al.k]===i?'true':'false');b.addEventListener('click',()=>{S[al.k]=i;currentPreset=-1;requestRender();buildPanel();commit();});row.appendChild(b);});body.appendChild(row);});
+}
+function colorRow(k,name,sw){const wrap=document.createElement('div');wrap.className='ctl';wrap.innerHTML=`<div class="lab">${name}</div>`;const row=document.createElement('div');row.className='colors';
+  sw.forEach((hex,i)=>{const b=document.createElement('button');b.type='button';b.className='sw';b.setAttribute('aria-label',name+' '+hex);b.innerHTML=`<span style="background:${hex}"></span>`;b.setAttribute('aria-pressed',S[k]===hex?'true':'false');b.addEventListener('click',()=>{S[k]=hex;currentPreset=-1;requestRender();buildPanel();commit();});row.appendChild(b);});
+  const ci=document.createElement('input');ci.type='color';ci.id='in-'+k;ci.value=S[k];ci.addEventListener('input',()=>{S[k]=ci.value;currentPreset=-1;requestRender();});ci.addEventListener('change',()=>{buildPanel();commit();});row.appendChild(ci);wrap.appendChild(row);return wrap;}
+function buildAssetsPanel(body){
+  const dz=document.createElement('div');dz.className='dz';dz.innerHTML='把 PNG 配件拖到左側預覽區，或<br>';const inp=document.createElement('input');inp.type='file';inp.multiple=true;inp.accept='image/png,image/webp';inp.id='fileIn';inp.addEventListener('change',()=>importFiles(Array.from(inp.files)));dz.appendChild(inp);body.appendChild(dz);
+  body.insertAdjacentHTML('beforeend',`<p class="muted">檔名前綴決定圖層：<b>hairfront_</b> 前髮、<b>hairback_</b> 後髮、<b>eyes_</b> 眼睛、<b>brow_</b> 眉毛、<b>nose_</b> 鼻子、<b>mouth_</b> 嘴巴、<b>face_</b> 臉型、<b>pin_</b> 髮飾、<b>mark_</b> 紋飾、<b>extra_</b> 鬚斑、<b>body_</b> 服飾、<b>bg_</b> 背景。中文名稱（眼、眉、鼻、嘴、臉、前髮、後髮、簪、紋、衣）也能辨識；辨識錯了可在下方改。透明 PNG，正面，配件置中；匯入後在該部位用「微調」對位。素材存在這個瀏覽器裡。</p>`);
+  const g=document.createElement('div');g.className='gt';g.textContent='已匯入素材（'+userAssets.length+'）';body.appendChild(g);
+  const layerNames={hairFront:'前髮',hairBack:'後髮',eyes:'眼睛',brows:'眉毛',nose:'鼻子',mouth:'嘴巴',face:'臉型',pin:'髮飾',mark:'紋飾',extra:'鬚斑',body:'服飾',bg:'背景'};
+  userAssets.forEach(a=>{const row=document.createElement('div');row.className='assetrow';const im=document.createElement('img');im.src=a.img.src;row.appendChild(im);row.insertAdjacentHTML('beforeend',`<span class="fn">${a.name}</span>`);const sel=document.createElement('select');for(const k in layerNames){const o=document.createElement('option');o.value=k;o.textContent=layerNames[k];if(k===a.layer)o.selected=true;sel.appendChild(o);}sel.addEventListener('change',async()=>{a.layer=sel.value;await dbPut({name:a.name,layer:a.layer,blob:a.blob});requestRender();});row.appendChild(sel);
+    const use=document.createElement('button');use.type='button';use.className='tb';use.textContent='套用';use.addEventListener('click',()=>{S.parts[a.layer]={src:'u',id:a.name};currentPreset=-1;requestRender();commit();toast('已套用 '+a.name);});row.appendChild(use);
+    const del=document.createElement('button');del.type='button';del.className='tb';del.textContent='刪除';del.addEventListener('click',async()=>{await dbDel(a.name);const i=userAssets.indexOf(a);if(i>=0)userAssets.splice(i,1);for(const l in S.parts){if(S.parts[l].src==='u'&&S.parts[l].id===a.name)S.parts[l]={src:'b',id:0};}buildPanel();requestRender();});row.appendChild(del);body.appendChild(row);});
+  if(!userAssets.length)body.insertAdjacentHTML('beforeend','<p class="muted">尚未匯入。目前顯示的是內建占位配件。</p>');
+}
+
+/* ---------- encode / history ---------- */
+function encode(o){o=o||S;return 'WD6.'+btoa(unescape(encodeURIComponent(JSON.stringify(o))));}
+function decode(str){str=(str||'').trim();if(!str.startsWith('WD6.'))return null;try{const o=JSON.parse(decodeURIComponent(escape(atob(str.slice(4)))));if(!o||!o.parts)return null;return Object.assign(clone(DEF),o);}catch(e){return null;}}
+const hist={u:[],r:[]};let lastCommitted='';
+function commit(){const c=encode();if(c===lastCommitted)return;hist.u.push(lastCommitted);if(hist.u.length>60)hist.u.shift();hist.r.length=0;lastCommitted=c;refreshHistBtns();persist();}
+function undo(){if(!hist.u.length)return;hist.r.push(lastCommitted);const c=hist.u.pop();S=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function redo(){if(!hist.r.length)return;hist.u.push(lastCommitted);const c=hist.r.pop();S=decode(c);lastCommitted=c;currentPreset=-1;refreshAll();refreshHistBtns();persist();}
+function refreshHistBtns(){$('#btnUndo').disabled=!hist.u.length;$('#btnRedo').disabled=!hist.r.length;}
+function persist(){try{localStorage.setItem('wd6_last',encode());localStorage.setItem('wd6_preset',String(currentPreset));}catch(e){}}
+function refreshAll(){requestRender();buildPanel();}
+function toast(msg,el){const t=$(el||'#toast');t.textContent=msg;clearTimeout(t._h);t._h=setTimeout(()=>{t.textContent='';},2600);}
+
+/* ---------- gallery / share / export / random ---------- */
+async function snapshot(St){const off=document.createElement('canvas');off.width=BW;off.height=BH;const oc=off.getContext('2d');oc.fillStyle='#e9eef4';oc.fillRect(0,0,BW,BH);const imgs=await compose(off,St);for(const [layer,img,user] of imgs)drawLayer(oc,img,layer,Object.assign({},TF0,St.tf[layer]||{}),user);const t=document.createElement('canvas');t.width=t.height=220;t.getContext('2d').drawImage(off,200,120,800,800,0,0,220,220);return t.toDataURL('image/jpeg',0.8);}
+function loadSaved(){try{return JSON.parse(localStorage.getItem('wd6_saved')||'[]');}catch(e){return [];}}
+async function openGallery(){const gp=$('#galPresets');gp.innerHTML='';for(let i=0;i<PRESET_PARTS.length;i++){const p=PRESET_PARTS[i];const b=document.createElement('button');b.type='button';b.className='thumb';const im=document.createElement('img');im.alt=p.name;b.appendChild(im);b.insertAdjacentHTML('beforeend',`<span class="t">${p.name}</span><span class="s">${p.info}</span>`);b.addEventListener('click',()=>{S=fromPreset(i);currentPreset=i;refreshAll();commit();closeOv('#ovGallery');toast(`已套用「${p.name}」`);});gp.appendChild(b);snapshot(fromPreset(i)).then(u=>im.src=u);}
+  const saved=loadSaved();const gs=$('#galSaved');gs.innerHTML='';$('#galEmpty').hidden=saved.length>0;
+  saved.forEach((it,i)=>{const o=decode(it.code);if(!o)return;const b=document.createElement('div');b.className='thumb';b.tabIndex=0;b.setAttribute('role','button');const im=document.createElement('img');im.src=it.img||'';im.alt=it.name;b.appendChild(im);b.insertAdjacentHTML('beforeend',`<span class="t">${it.name}</span><span class="s">${it.date}</span>`);const load=()=>{S=o;currentPreset=-1;refreshAll();commit();closeOv('#ovGallery');toast(`已載入「${it.name}」`);};b.addEventListener('click',load);b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();load();}});
+    const del=document.createElement('button');del.type='button';del.className='tb';del.textContent='刪除';del.addEventListener('click',ev=>{ev.stopPropagation();const arr=loadSaved();arr.splice(i,1);try{localStorage.setItem('wd6_saved',JSON.stringify(arr));}catch(e){}openGallery();});b.appendChild(del);gs.appendChild(b);});
+  $('#ovGallery').hidden=false;}
+function closeOv(sel){$(sel).hidden=true;}
+async function saveFace(){const arr=loadSaved();const d=new Date();const img=await snapshot(S);arr.unshift({name:'臉譜 '+(arr.length+1),code:encode(),img,date:`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`});if(arr.length>10)arr.length=10;try{localStorage.setItem('wd6_saved',JSON.stringify(arr));toast('已存入臉譜庫（這個瀏覽器）');}catch(e){toast('儲存空間不足或被封鎖，請改用分享數據');}}
+function openShare(){const code=encode();$('#codeOut').value=code;const box=$('#qr');box.innerHTML='';try{if(window.QRCode){new QRCode(box,{text:code,width:152,height:152,colorDark:'#1d2530',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.L});}else box.textContent='二維碼元件未載入，請用文字數據。';}catch(e){box.textContent='數據過長，請用文字數據。';}$('#ovShare').hidden=false;}
+function openExport(){$('#exImg').src=cv.toDataURL('image/png');$('#ovExport').hidden=false;}
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];const rnd=(a,b)=>Math.round(a+Math.random()*(b-a));
+function optionsFor(layer){const cat=CATS.find(c=>c.id===layer);const o=cat.names.map((n,i)=>({src:'b',id:i}));userAssets.filter(a=>a.layer===layer).forEach(a=>o.push({src:'u',id:a.name}));return o;}
+function randomize(layers,colors){layers.forEach(l=>{S.parts[l]=pick(optionsFor(l));S.tf[l]=undefined;});
+  if(layers.includes('hairBack')){const hb=S.parts.hairBack;if(hb.src==='b'&&hb.id===5)S.parts.hairFront={src:'b',id:7};else if(S.parts.hairFront.src==='b'&&S.parts.hairFront.id===7)S.parts.hairFront={src:'b',id:rnd(0,6)};}
+  if(layers.includes('mark')&&Math.random()<0.5)S.parts.mark={src:'b',id:0};if(layers.includes('extra')&&Math.random()<0.6)S.parts.extra={src:'b',id:0};
+  if(colors){S.skin=pick(SKINS);S.hair=pick(HAIRS);S.iris=pick(IRISES);S.robe=rnd(0,5);S.aura=rnd(0,7);S.halo=rnd(0,1);}
+  currentPreset=-1;refreshAll();commit();}
+
+/* ---------- wire ---------- */
+buildRail();
+$('#camFace').addEventListener('click',()=>{cam='face';$('#camFace').setAttribute('aria-pressed','true');$('#camBody').setAttribute('aria-pressed','false');applyCam();});
+$('#camBody').addEventListener('click',()=>{cam='body';$('#camFace').setAttribute('aria-pressed','false');$('#camBody').setAttribute('aria-pressed','true');applyCam();});
+const cmp=$('#btnCompare');const cmpOn=()=>{compareBase=currentPreset>=0?fromPreset(currentPreset):(hist.u.length?decode(hist.u[0]):null);if(!compareBase){toast('目前沒有可對比的原貌');return;}cmp.setAttribute('aria-pressed','true');requestRender();};const cmpOff=()=>{if(!compareBase)return;compareBase=null;cmp.setAttribute('aria-pressed','false');requestRender();};
+cmp.addEventListener('pointerdown',e=>{e.preventDefault();cmpOn();});cmp.addEventListener('pointerup',cmpOff);cmp.addEventListener('pointerleave',cmpOff);cmp.addEventListener('pointercancel',cmpOff);cmp.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();cmpOn();}});cmp.addEventListener('keyup',cmpOff);
+$('#btnUndo').addEventListener('click',undo);$('#btnRedo').addEventListener('click',redo);
+$('#btnRandCat').addEventListener('click',()=>{const cat=CATS.find(c=>c.id===activeCat);if(cat.color){randomize([],true);}else if(cat.assets){toast('請選一個部位');return;}else randomize([cat.id],false);toast('隨機了「'+cat.name+'」');});
+$('#btnRandAll').addEventListener('click',()=>{randomize(CATS.filter(c=>c.pk).map(c=>c.id),true);toast('隨機湊了一張臉');});
+$('#btnResetTf').addEventListener('click',()=>{const cat=CATS.find(c=>c.id===activeCat);if(cat&&cat.pk){S.tf[cat.id]=undefined;refreshAll();commit();toast('已重置「'+cat.name+'」微調');}});
+$('#btnGallery').addEventListener('click',openGallery);$('#galClose').addEventListener('click',()=>closeOv('#ovGallery'));
+$('#btnSave').addEventListener('click',saveFace);$('#btnShare').addEventListener('click',openShare);$('#shClose').addEventListener('click',()=>closeOv('#ovShare'));
+$('#btnExport').addEventListener('click',openExport);$('#exClose').addEventListener('click',()=>closeOv('#ovExport'));
+document.querySelectorAll('.overlay').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.hidden=true;}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.overlay').forEach(o=>o.hidden=true);}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();}});
+$('#btnCopy').addEventListener('click',()=>{const ta=$('#codeOut');const txt=ta.value;const fb=()=>{ta.focus();ta.select();toast('已選取數據，請按複製','#toast2');};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>toast('數據已複製','#toast2')).catch(fb);}else fb();});
+$('#btnImport').addEventListener('click',()=>{const o=decode($('#codeIn').value);if(o){S=o;currentPreset=-1;refreshAll();commit();closeOv('#ovShare');toast('數據已載入');}else toast('數據格式不對，請確認以 WD6. 開頭且完整','#toast2');});
+// drag & drop assets onto the stage
+const stage=$('#stage'),drop=$('#drop');let dragDepth=0;
+stage.addEventListener('dragenter',e=>{e.preventDefault();dragDepth++;drop.hidden=false;});stage.addEventListener('dragover',e=>{e.preventDefault();});
+stage.addEventListener('dragleave',()=>{dragDepth--;if(dragDepth<=0){drop.hidden=true;dragDepth=0;}});
+stage.addEventListener('drop',e=>{e.preventDefault();dragDepth=0;drop.hidden=true;importFiles(Array.from(e.dataTransfer.files||[]));});
+
+/* ---------- boot ---------- */
+async function start(data){
+  await loadUserAssets();
+  let loaded=false;
+  if(data&&data.code){const o=decode(data.code);if(o){S=o;currentPreset=typeof data.preset==='number'?data.preset:-1;loaded=true;}}
+  if(!loaded){try{const c=localStorage.getItem('wd6_last');const o=c&&decode(c);if(o){S=o;const pi=parseInt(localStorage.getItem('wd6_preset')||'-1',10);currentPreset=isNaN(pi)?-1:pi;loaded=true;}const t=localStorage.getItem('wd6_cat');if(t&&CATS.some(x=>x.id===t)){activeCat=t;refreshRail();}}catch(e){}}
+  if(!loaded){S=fromPreset(0);currentPreset=0;}
+  lastCommitted=encode();refreshAll();refreshHistBtns();
+}
+try{window.claude?.hot?.snapshot?.(()=>({code:encode(),preset:currentPreset}));}catch(e){}
+if(window.claude?.hot?.ready){window.claude.hot.ready(start);}else{start(window.claude?.hot?.data??{});}
+})();
+</script>
